@@ -17,6 +17,7 @@
 
 #include "hvml/hvml_string.h"
 #include "HvmlRuntime.h"
+#include "JsonQuery.h"
 
 #include <iostream>
 #include <exception>
@@ -151,74 +152,47 @@ hvml_dom_t* HvmlRuntime::FindInitData(const char* as_s)
     return NULL;
 }
 
+// dollar_s : "$capital_list.shandong"
+// output_s : "ji-nan"
+// 
+// <init as = "capital_list">
+//  [
+//    "shandong": "ji-nan",
+//    "jiangsu":  "nanjing"
+//  ]
+// </init>
+// 
+// This function has not completed.
 bool HvmlRuntime::GetDollarString(hvml_string_t& dollar_s,
-                                  hvml_string_t* output_s,
-                                  DOLLAR_STRING_TYPE type,
-                                  const char* init_as_s,
-                                  int dollar_index)
+                                  hvml_string_t* output_s)
 {
-    switch (type) {
-        case enDollarNormal: {
-            // for example
-            // dollar_s : "$capital_list.shandong"
-            // output_s : "ji-nan"
-            // 
-            // <init as = "capital_list">
-            //  [
-            //    "shandong": "ji-nan",
-            //    "jiangsu":  "nanjing"
-            //  ]
-            // </init>
-            // 
-            // This function has not completed.
-            if ('$' != dollar_s.str[0]) return false;
-            hvml_dom_t* vdom = FindInitData(&dollar_s.str[1]);
-            if (! vdom) return false;
+    if ('$' != dollar_s.str[0]) return false;
+    hvml_dom_t* vdom = FindInitData(&dollar_s.str[1]);
+    if (! vdom) return false;
 
-            A(hvml_dom_type(vdom) == MKDOT(D_JSON), "internal logic error");
-            hvml_jo_value_t* jo = hvml_dom_jo(vdom);
-            if (hvml_jo_value_type(jo) == MKJOT(J_STRING)) {
-                const char *s;
-                if (! hvml_jo_string_get(jo, &s)) {
-                    hvml_string_set(output_s, s, strlen(s));
-                    return true;
-                }
-            }
+    A(hvml_dom_type(vdom) == MKDOT(D_JSON), "internal logic error");
+    hvml_jo_value_t* jo = hvml_dom_jo(vdom);
+    
+    if (hvml_jo_value_type(jo) == MKJOT(J_STRING)) {
+        const char *s;
+        if (! hvml_jo_string_get(jo, &s)) {
+            hvml_string_set(output_s, s, strlen(s));
             return true;
-        } break;
-
-        case enDollarIterate: {
-            // for example
-            // dollar_s : "$?.class"
-            // init_as_s : "$buttons"
-            // dollar_index: 3
-            // output_s : "c_blue backspace"
-            // 
-            // <init as = "buttons">
-            //  [
-            //    { "letters": "7", "class": "number" },
-            //    { "letters": "8", "class": "number" },
-            //    { "letters": "9", "class": "number" },
-            //    { "letters": "←", "class": "c_blue backspace" },
-            //    { "letters": "C", "class": "c_blue clear" },
-            //  ]
-            // </init>
-            // 
-            // This function has not completed.
-            if ('$' != init_as_s[0]) return false;
-            hvml_dom_t* vdom = FindInitData(&init_as_s[1]);
-            if (! vdom) return false;
-        } break;
+        }
     }
-
-    return false;
+    return true;
 }
 
-bool HvmlRuntime::SetDollarString(hvml_string_t& dollar_s,
-                                  hvml_string_t* input_s,
-                                  DOLLAR_STRING_TYPE type,
+bool HvmlRuntime::GetDollarString(hvml_string_t& dollar_s,
                                   const char* init_as_s,
-                                  int dollar_index)
+                                  hvml_string_t* output_s)
+{
+    return true;
+}
+
+bool HvmlRuntime::GetDollarString(const char* init_as_s,
+                                  const char* templet_s,
+                                  hvml_string_t* output_s)
 {
     return true;
 }

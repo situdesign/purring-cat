@@ -18,11 +18,13 @@ project(hvml-agent) : aceexe {
         HttpServer.cpp
         HvmlEcho.cpp
         HvmlRuntime.cpp
+        JsonQuery.cpp
     }
 
     Header_Files {
         HttpServer.h
         HvmlEcho.h
         HvmlRuntime.h
+        JsonQuery.h
     }
 }
