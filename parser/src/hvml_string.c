@@ -48,6 +48,57 @@ int hvml_string_pop(hvml_string_t *str, char *c) {
     return 0;
 }
 
+int hvml_string_concat(hvml_string_t *str, const char *buf, size_t len) {
+    char *s = (char*)realloc(str->str, str->len + len + 1); // one extra null terminator
+    if (!s) return -1;
+
+    memcpy(s + str->len, buf, len);
+    str->str    = s;
+    str->len   += len;
+    s[str->len] = '\0';
+
+    return 0;
+}
+
+int  hvml_string_concat2(hvml_string_t *str, const char *buf1, size_t len1,
+                                             const char *buf2, size_t len2)
+{
+    int new_len = str->len + len1 + len2;
+    char *s = (char*)realloc(str->str, new_len + 1); // one extra null terminator
+    if (!s) return -1;
+
+    str->str = s;
+    s += str->len;
+    memcpy(s, buf1, len1);
+    s += len1;
+    memcpy(s, buf2, len2);
+    str->len    = new_len;
+    s[str->len] = '\0';
+
+    return 0;
+}
+
+int  hvml_string_concat3(hvml_string_t *str, const char *buf1, size_t len1,
+                                             const char *buf2, size_t len2,
+                                             const char *buf3, size_t len3)
+{
+    int new_len = str->len + len1 + len2 + len3;
+    char *s = (char*)realloc(str->str, new_len + 1); // one extra null terminator
+    if (!s) return -1;
+
+    str->str = s;
+    s += str->len;
+    memcpy(s, buf1, len1);
+    s += len1;
+    memcpy(s, buf2, len2);
+    s += len2;
+    memcpy(s, buf3, len3);
+    str->len    = new_len;
+    s[str->len] = '\0';
+
+    return 0;
+}
+
 int hvml_string_get(hvml_string_t *str, char **buf, size_t *len) {
     if (buf) *buf = str->str;
     if (len) *len = str->len;

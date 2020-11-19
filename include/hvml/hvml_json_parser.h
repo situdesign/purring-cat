@@ -18,6 +18,8 @@
 #ifndef _hvml_json_parser_h_
 #define _hvml_json_parser_h_
 
+#include "hvml_string.h"
+
 #include <stddef.h>
 #include <stdint.h>
 #include <stdio.h>
@@ -78,6 +80,7 @@ void                hvml_json_parser_set_offset(hvml_json_parser_t *parser, size
 
 // serializing `str` as a json string
 void                hvml_json_str_printf(FILE *out, const char *s, size_t len);
+void                hvml_json_str_to_string(hvml_string_t *out, const char *s, size_t len);
 
 #ifdef __cplusplus
 }

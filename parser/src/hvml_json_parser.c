@@ -1331,6 +1331,52 @@ void hvml_json_str_printf(FILE *out, const char *s, size_t len) {
     fprintf(out, "\"");
 }
 
+void hvml_json_str_to_string(hvml_string_t *out, const char *s, size_t len) {
+    hvml_string_push(out, '\"');
+    const char *p = s;
+    for (size_t i=0; i<len; ++i, ++p) {
+        const char c = *p;
+        switch (c) {
+            case '"': {
+                const char temp[] = "\\\"";
+                hvml_string_concat(out, temp, sizeof(temp)-1);
+            } break;
+            case '\\': {
+                const char temp[] = "\\\\";
+                hvml_string_concat(out, temp, sizeof(temp)-1);
+            } break;
+            case '\b': {
+                const char temp[] = "\\b";
+                hvml_string_concat(out, temp, sizeof(temp)-1);
+            } break;
+            case '\t': {
+                const char temp[] = "\\t";
+                hvml_string_concat(out, temp, sizeof(temp)-1);
+            } break;
+            case '\f': {
+                const char temp[] = "\\f";
+                hvml_string_concat(out, temp, sizeof(temp)-1);
+            } break;
+            case '\r': {
+                const char temp[] = "\\r";
+                hvml_string_concat(out, temp, sizeof(temp)-1);
+            } break;
+            case '\n': {
+                const char temp[] = "\\n";
+                hvml_string_concat(out, temp, sizeof(temp)-1);
+            } break;
+            case '\0': {
+                const char temp[] = "\\u0000";
+                hvml_string_concat(out, temp, sizeof(temp)-1);
+            }break;
+            default: {
+                hvml_string_push(out, c);
+            } break;
+        }
+    }
+    hvml_string_push(out, '\"');
+}
+
 
 
 

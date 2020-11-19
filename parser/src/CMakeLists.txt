@@ -1,8 +1,10 @@
 set(hvml_parser_src
     hvml_dom.c
     hvml_dom_printf.c
+    hvml_dom_to_string.c
     hvml_jo.c
     hvml_jo_printf.c
+    hvml_jo_to_string.c
     hvml_json_parser.c
     hvml_log.c
     hvml_parser.c

@@ -311,6 +311,30 @@ void hvml_dom_str_serialize(const char *str, size_t len, FILE *out) {
     }
 }
 
+void hvml_dom_str_serialize_string(const char *str, size_t len, hvml_string_t *out) {
+    const char *p = str;
+    for (size_t i=0; i<len; ++i, ++p) {
+        const char c = *p;
+        switch (c) {
+            case '&':  {
+                const char temp[] = "&amp;";
+                hvml_string_concat(out, temp, sizeof(temp)-1);
+            } break;
+            case '<':  {
+                if (i<len-1 && !isspace(p[1])) {
+                    const char temp[] = "&lt;";
+                    hvml_string_concat(out, temp, sizeof(temp)-1);
+                } else {
+                    hvml_string_push(out, c);
+                }
+            } break;
+            default: {
+                hvml_string_push(out, c);
+            }break;
+        }
+    }
+}
+
 void hvml_dom_attr_val_serialize(const char *str, size_t len, FILE *out) {
     const char *p = str;
     for (size_t i=0; i<len; ++i, ++p) {
@@ -319,6 +343,26 @@ void hvml_dom_attr_val_serialize(const char *str, size_t len, FILE *out) {
             case '&':  { fprintf(out, "&amp;");   break; }
             case '"':  { fprintf(out, "&quot;");  break; }
             default:   { fprintf(out, "%c", c);   break; }
+        }
+    }
+}
+
+void hvml_dom_attr_val_serialize_string(const char *str, size_t len, hvml_string_t *out) {
+    const char *p = str;
+    for (size_t i=0; i<len; ++i, ++p) {
+        const char c = *p;
+        switch (c) {
+            case '&': {
+                const char temp[] = "&amp;";
+                hvml_string_concat(out, temp, sizeof(temp)-1);
+            } break;
+            case '"': {
+                const char temp[] = "&quot;";
+                hvml_string_concat(out, temp, sizeof(temp)-1);
+            } break;
+            default: {
+                hvml_string_push(out, c);
+            } break;
         }
     }
 }

@@ -24,6 +24,12 @@ void hvml_string_clear(hvml_string_t *str);
 
 int  hvml_string_push(hvml_string_t *str, const char c);
 int  hvml_string_pop(hvml_string_t *str, char *c);
+int  hvml_string_concat(hvml_string_t *str, const char *buf, size_t len);
+int  hvml_string_concat2(hvml_string_t *str, const char *buf1, size_t len1,
+                                             const char *buf2, size_t len2);
+int  hvml_string_concat3(hvml_string_t *str, const char *buf1, size_t len1,
+                                             const char *buf2, size_t len2,
+                                             const char *buf3, size_t len3);
 
 int  hvml_string_get(hvml_string_t *str, char **buf, size_t *len);
 int  hvml_string_set(hvml_string_t *str, const char *buf, size_t len);
