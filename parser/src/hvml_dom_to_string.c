@@ -41,7 +41,7 @@ static void traverse_for_string(hvml_dom_t *dom, int lvl, int tag_open_close, vo
         {
             switch (tag_open_close) {
                 case 1: {
-                    const char temp[] = "<%s";
+                    const char temp[] = "<";
                     const char *name = hvml_dom_tag_name(dom);
                     hvml_string_concat2(parg->out, temp, sizeof(temp)-1,
                                                    name, strlen(name));

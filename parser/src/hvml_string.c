@@ -72,8 +72,8 @@ int  hvml_string_concat2(hvml_string_t *str, const char *buf1, size_t len1,
     memcpy(s, buf1, len1);
     s += len1;
     memcpy(s, buf2, len2);
-    str->len    = new_len;
-    s[str->len] = '\0';
+    str->len = new_len;
+    str->str[str->len] = '\0';
 
     return 0;
 }
@@ -93,8 +93,8 @@ int  hvml_string_concat3(hvml_string_t *str, const char *buf1, size_t len1,
     memcpy(s, buf2, len2);
     s += len2;
     memcpy(s, buf3, len3);
-    str->len    = new_len;
-    s[str->len] = '\0';
+    str->len = new_len;
+    str->str[str->len] = '\0';
 
     return 0;
 }

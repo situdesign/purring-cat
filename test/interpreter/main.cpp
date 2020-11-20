@@ -22,6 +22,7 @@
 #include "hvml/hvml_log.h"
 #include "hvml/hvml_utf8.h"
 #include "hvml/hvml_string.h"
+#include "hvml/hvml_to_string.h"
 
 #include "interpreter/ext_tools.h"
 #include "interpreter/interpreter_basic.h"
@@ -227,6 +228,13 @@ static int process_hvml(FILE *in,
     {
         // This is a test, print as origin file is.
         //Interpreter_Basic::GetOutput(dom, vdom_part_f);
+        
+        I("----------------- Test to_string");
+        hvml_string_t dom_string = hvml_dom_to_string(dom);
+        fwrite(dom_string.str, 1, dom_string.len, vdom_part_f);
+        hvml_dom_destroy(dom);
+        return 0;
+
 
         hvml_dom_t*      udom_part = NULL;
         MustacheGroup_t  mustache_part;
