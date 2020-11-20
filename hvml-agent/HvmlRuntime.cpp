@@ -16,6 +16,7 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 #include "hvml/hvml_string.h"
+#include "hvml/hvml_to_string.h"
 #include "interpreter/str_tools.h"
 #include "HvmlRuntime.h"
 #include "JsonQuery.h"
@@ -77,7 +78,6 @@ bool HvmlRuntime::Refresh(void)
 {
     try {
         TransformMustacheGroup();
-        TransformArchetypeGroup();
         TransformIterateGroup();
         TransformObserveGroup();
     }
@@ -126,19 +126,50 @@ void HvmlRuntime::TransformMustacheGroup()
              });
 }
 
-void HvmlRuntime::TransformArchetypeGroup()
-{
-    ;
-}
-
 void HvmlRuntime::TransformIterateGroup()
 {
-    ;
+    // for_each(m_archetype_part.begin(),
+    //          m_archetype_part.end(),
+    //          [this](archetype_t& item)->void{
+                
+    //             hvml_dom_t *vdom = item.vdom;
+
+    //             hvml_string_t templet_s = hvml_dom_to_string(vdom);
+    //             hvml_string_t replaced_s = {NULL, 0};
+
+    //             I("+++ +++ templet_s: %s", templet_s.str);
+
+    //             if (GetDollarString(item.s_id, templet_s.str, &replaced_s)) {
+
+    //                 I("+++ +++ replaced_s: %s", replaced_s.str);
+
+    //                 hvml_dom_t *uo = item.udom_owner;
+    //                 hvml_dom_t *udom = hvml_dom_append_content(uo,
+    //                                                            replaced_s.str,
+    //                                                            replaced_s.len);
+    //                 A(udom, "internal logic error");
+    //                 item.udom = udom;
+    //             }
+    //             hvml_string_clear(&templet_s);
+    //             hvml_string_clear(&replaced_s);
+    //          });
 }
 
 void HvmlRuntime::TransformObserveGroup()
 {
     ;
+}
+
+hvml_string_t HvmlRuntime::FindArchetypeTemplet(hvml_string_t id_s)
+{
+    ArchetypeGroup_t::iterator it = m_archetype_part.begin();
+    for (; it != m_archetype_part.end(); it ++) {
+        if (0 == strcmp(it->s_id.str, id_s.str)) {
+            hvml_dom_t *vdom = it->vdom;
+            return hvml_dom_to_string(vdom);
+        }
+    }
+    return {NULL, 0};
 }
 
 hvml_dom_t* HvmlRuntime::FindInitData(hvml_string_t as_s)
@@ -171,8 +202,7 @@ bool HvmlRuntime::GetDollarString(const char* dollar_s,
 
     StringArray_t sa;
     int n = split_string(sa, &dollar_s[1], ".");
-    if (n < 1) {
-        clear_StringArray(sa);
+    if (n <= 0) {
         return false;
     }
 
@@ -216,8 +246,7 @@ bool HvmlRuntime::GetDollarString(const char* dollar_s,
 
     StringArray_t sa;
     int n = split_string(sa, &dollar_s[1], ".");
-    if (n < 1) {
-        clear_StringArray(sa);
+    if (n <= 0) {
         return false;
     }
 
@@ -239,9 +268,30 @@ bool HvmlRuntime::GetDollarString(hvml_string_t init_as_s,
                                   const char* templet_s,
                                   hvml_string_t* output_s)
 {
+    I("............... init_as_s: %s  ", init_as_s.str);
+    hvml_dom_t* vdom = FindInitData(init_as_s);
+    if (! vdom) return false;
 
+    I("............... 2");
+    hvml_jo_value_t* jo = hvml_dom_jo(vdom);
+    if (! jo) return false;
 
-    // unfinished
+    StringArray_t sa_dallors;
+    I("............... 3");
+    int n = find_all_dollars(sa_dallors, templet_s);
+    if (n <= 0) return false;
+
+    I("............... find_all_dallors: n=%d -----", n);
+
+    JsonQuery jq(jo);
+    if (jq.enumerable()) {
+        // 可列举的类型采用列表处理方式
+        ;
+    }
+    else {
+        // 不可列举的类型就直接替换，替换不成（例如遇到 $?）就直接报错
+        ;
+    }
     
     return true;
 }

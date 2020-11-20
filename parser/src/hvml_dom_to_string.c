@@ -78,15 +78,19 @@ static void traverse_for_string(hvml_dom_t *dom, int lvl, int tag_open_close, vo
             if (val) {
                 const char head[] = "=\"";
                 const char tail[] = "\"";
-                hvml_string_concat(parg->out, head, sizeof(head)-1);
-                hvml_dom_attr_val_serialize_string(val, strlen(val), parg->out);
-                hvml_string_concat(parg->out, tail, sizeof(tail)-1);
+                // hvml_string_concat(parg->out, head, sizeof(head)-1);
+                // hvml_dom_attr_val_serialize_string(val, strlen(val), parg->out);
+                // hvml_string_concat(parg->out, tail, sizeof(tail)-1);
+                hvml_string_concat3(parg->out, head, sizeof(head)-1,
+                                               val, strlen(val),
+                                               tail, sizeof(tail)-1);
             }
         } break;
         case MKDOT(D_TEXT):
         {
             const char *text = hvml_dom_text(dom);
-            hvml_dom_str_serialize_string(text, strlen(text), parg->out);
+            hvml_string_concat(parg->out, text, strlen(text));
+            //hvml_dom_str_serialize_string(text, strlen(text), parg->out);
             parg->lvl = lvl;
         } break;
         case MKDOT(D_JSON):

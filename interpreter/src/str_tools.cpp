@@ -15,9 +15,16 @@
 // You should have received a copy of the GNU Lesser General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+#include "hvml/hvml_log.h"
 #include "interpreter/ext_tools.h"
 #include "interpreter/str_tools.h"
 #include <algorithm> // for_each
+
+hvml_string_t create_string(const char* str) {
+    hvml_string_t ret_s = {NULL, 0};
+    hvml_string_set(&ret_s, str, strlen(str));
+    return ret_s;
+}
 
 hvml_string_t create_trim_string(const char* str, size_t len) {
     hvml_string_t ret_s = {NULL, 0};
@@ -55,6 +62,23 @@ size_t split_string(StringArray_t& sa,
         }
         sa.push_back(create_trim_string(s, (p-s)));
         s += dn;
+    }
+    return sa.size();
+}
+
+size_t find_all_dollars(StringArray_t& sa,
+                        const char* in)
+{
+    sa.clear();
+    const char* p = NULL;
+    size_t n = 0;
+    I("+++ +++ + in: %s  +++", in);
+    p = find_dollar(in, &n);
+    while (p) {
+        I("+++ +++   p: %*s  +++", n, p);
+        sa.push_back(create_trim_string(p, n));
+        in += n;
+        p = find_dollar(in, &n);
     }
     return sa.size();
 }

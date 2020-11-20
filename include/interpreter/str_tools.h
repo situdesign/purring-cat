@@ -28,10 +28,28 @@ using namespace std;
 
 typedef vector<hvml_string_t>  StringArray_t;
 
+class trust_string {
+private:
+    hvml_string_t s_;
+
+public:
+    trust_string(hvml_string_t s)
+    : s_(s) {}
+
+    ~trust_string() {
+        hvml_string_clear(&s_);
+    }
+
+    hvml_string_t& s() { return s_; }
+};
+
+hvml_string_t create_string(const char* str);
 hvml_string_t create_trim_string(const char* str, size_t len);
 void clear_StringArray(StringArray_t& sa);
 size_t split_string(StringArray_t& sa,
                     const char* src_s,
                     const char* delimiter_s);
+size_t find_all_dollars(StringArray_t& sa,
+                        const char* in);
 
 #endif //_str_tools_h_

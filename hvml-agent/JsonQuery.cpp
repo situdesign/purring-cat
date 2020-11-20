@@ -15,8 +15,11 @@
 // You should have received a copy of the GNU Lesser General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+#include "interpreter/str_tools.h"
+#include "hvml/hvml_to_string.h"
 #include "hvml/hvml_log.h"
 #include "JsonQuery.h"
+#include <string.h>
 
 JsonQuery::JsonQuery(JsonQuery& in)
 : error_(in.error_)
@@ -32,32 +35,164 @@ JsonQuery::JsonQuery(hvml_jo_value_t* jo)
     A(jo_, "internal logic error");
 }
 
-JsonQuery& JsonQuery::find(const char* query_s)
+JsonQuery JsonQuery::find(const char* query_s)
 {
+    if (error_) {
+        return *this;
+    }
+
+    switch (hvml_jo_value_type(jo_)) {
+
+        case MKJOT(J_TRUE): {
+            error_ = true;
+        } break;
+
+        case MKJOT(J_FALSE): {
+            error_ = true;
+        } break;
+
+        case MKJOT(J_NULL): {
+            error_ = true;
+        } break;
+
+        case MKJOT(J_NUMBER): {
+            error_ = true;
+        } break;
+
+        case MKJOT(J_STRING): {
+            error_ = true;
+        } break;
+
+        case MKJOT(J_OBJECT): {
+            hvml_jo_value_t *child = hvml_jo_value_child(jo_);
+            while (child) {
+                JsonQuery jq(child);
+                jq.find(query_s);
+                if (! jq.error()) return jq;
+                child = hvml_jo_value_sibling_next(child);
+            }
+            error_ = true;
+        } break;
+
+        case MKJOT(J_OBJECT_KV): {
+            const char *key;
+            hvml_jo_value_t* val;
+            A(0==hvml_jo_kv_get(jo_, &key, &val), "internal logic error");
+            A(key, "internal logic error");
+            if (0 == strcmp(query_s, key)) {
+                jo_ = val;
+            }
+            else {
+                error_ = true;
+            }
+        } break;
+
+        case MKJOT(J_ARRAY): {
+            hvml_jo_value_t *child = hvml_jo_value_child(jo_);
+            while (child) {
+                JsonQuery jq(child);
+                jq.find(query_s);
+                if (! jq.error()) return jq;
+                child = hvml_jo_value_sibling_next(child);
+            }
+            error_ = true;
+        } break;
+
+        default: {
+            A(0, "print json type [%d]: not implemented yet", hvml_jo_value_type(jo_));
+        } break;
+    }
+
     return *this;
 }
 
 hvml_jo_value_t* JsonQuery::get()
 {
-    return NULL;
+    if (error_) {
+        return NULL;
+    }
+    return jo_;
 }
 
 hvml_string_t JsonQuery::getString()
 {
-    return {NULL, 0};
+    if (error_) {
+        return create_string("error");
+    }
+    return hvml_jo_value_to_string(jo_);
 }
 
 int64_t JsonQuery::getInt()
 {
-    return 0;
+    if (error_) {
+        return -99999999;
+    }
+
+    A(hvml_jo_value_type(jo_) == MKJOT(J_NUMBER), "internal logic error");
+
+    int is_integer;
+    int64_t i;
+    double d;
+    const char *s;
+    A(0==hvml_jo_number_get(jo_, &is_integer, &i, &d, &s), "internal logic error");
+
+    if (is_integer) {
+        return i;
+    } else {
+        return (int64_t)d;
+    }
+}
+
+double JsonQuery::getDouble()
+{
+    if (error_) {
+        return -99999999.99;
+    }
+
+    A(hvml_jo_value_type(jo_) == MKJOT(J_NUMBER), "internal logic error");
+
+    int is_integer;
+    int64_t i;
+    double d;
+    const char *s;
+    A(0==hvml_jo_number_get(jo_, &is_integer, &i, &d, &s), "internal logic error");
+
+    if (is_integer) {
+        return (double)i;
+    } else {
+        return d;
+    }
 }
 
 bool JsonQuery::set(const char* json_s)
 {
+    if (error_) {
+        return false;
+    }
+
     return true;
 }
 
 bool JsonQuery::set(hvml_jo_value_t* jo)
 {
+    if (error_) {
+        return false;
+    }
+    
     return true;
+}
+
+bool JsonQuery::enumerable()
+{
+    if (error_) {
+        return false;
+    }
+
+    switch (hvml_jo_value_type(jo_)) {
+        case MKJOT(J_OBJECT):
+        case MKJOT(J_ARRAY): {
+            return true;
+        }
+    }
+    return false;
 }

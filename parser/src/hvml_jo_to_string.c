@@ -100,7 +100,8 @@ static int traverse_for_string(hvml_jo_value_t *jo, int lvl, int action, void *a
             }
             const char *s;
             if (!hvml_jo_string_get(jo, &s)) {
-                hvml_json_str_to_string(parg->out, s, s ? strlen(s) : 0);
+                //hvml_json_str_to_string(parg->out, s, s ? strlen(s) : 0);
+                hvml_string_concat(parg->out, s, strlen(s));
             }
         } break;
         case MKJOT(J_OBJECT): {
@@ -132,7 +133,8 @@ static int traverse_for_string(hvml_jo_value_t *jo, int lvl, int action, void *a
                     A(0==hvml_jo_kv_get(jo, &key, NULL), "internal logic error");
                     A(key, "internal logic error");
                     A(parent && hvml_jo_value_type(parent)==MKJOT(J_OBJECT), "internal logic error");
-                    hvml_json_str_to_string(parg->out, key, strlen(key));
+                    //hvml_json_str_to_string(parg->out, key, strlen(key));
+                    hvml_string_concat(parg->out, key, strlen(key));
                 } break;
                 case -1: {
                 } break;

@@ -41,9 +41,9 @@ private:
 
 private:
     void TransformMustacheGroup();
-    void TransformArchetypeGroup();
     void TransformIterateGroup();
     void TransformObserveGroup();
+    hvml_string_t FindArchetypeTemplet(hvml_string_t id_s);
     hvml_dom_t* FindInitData(hvml_string_t as_s);
     bool GetDollarString(const char* dollar_s,
                          hvml_string_t* output_s);

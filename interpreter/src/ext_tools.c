@@ -15,6 +15,7 @@
 // You should have received a copy of the GNU Lesser General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+#include "hvml/hvml_log.h"
 #include "interpreter/ext_tools.h"
 
 const char *file_ext(const char *file) {
@@ -49,6 +50,34 @@ const char *find_mustache(const char *s, size_t *ret_len) {
                 *ret_len = (end - ret + 2);
             }
             return ret;
+        }
+    }
+    return NULL;
+}
+
+const char *find_dollar(const char *s, size_t *ret_len)
+{
+    const char *ret = strchr(s, '$');
+    I("+++ +++ +++  ret: %s  +++", ret);
+    if (ret) {
+        const char *s = ret + 1; // jump over the $
+        while (1) {
+            char c = *s;
+
+            if (c == '.' ||
+                c == '_' ||
+                c == '?' ||
+                c == '@' ||
+                (c >= '0' && c <= '9') ||
+                (c >= 'a' && c <= 'z') ||
+                (c >= 'A' && c <= 'Z'))
+            {
+                s ++;
+            }
+            else {
+                *ret_len = (s - ret);
+                return ret;
+            }
         }
     }
     return NULL;
