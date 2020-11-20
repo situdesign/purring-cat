@@ -16,6 +16,7 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 #include "hvml/hvml_string.h"
+#include "interpreter/str_tools.h"
 #include "HvmlRuntime.h"
 #include "JsonQuery.h"
 
@@ -96,7 +97,7 @@ void HvmlRuntime::TransformMustacheGroup()
                 hvml_string_t s = {NULL, 0};
                 hvml_string_t s_replaced = {NULL, 0};
 
-                if (GetDollarString(item.s_inner_str, &s)) {
+                if (GetDollarString(item.s_inner_str.str, &s)) {
 
                     hvml_dom_t *udom = item.udom;
                     switch (hvml_dom_type(udom))
@@ -140,11 +141,11 @@ void HvmlRuntime::TransformObserveGroup()
     ;
 }
 
-hvml_dom_t* HvmlRuntime::FindInitData(const char* as_s)
+hvml_dom_t* HvmlRuntime::FindInitData(hvml_string_t as_s)
 {
     InitGroup_t::iterator it = m_init_part.begin();
     for (; it != m_init_part.end(); it ++) {
-        if (0 == strcmp(it->s_as.str, as_s)) {
+        if (0 == strcmp(it->s_as.str, as_s.str)) {
             return it->vdom;
             break;
         }
@@ -163,36 +164,84 @@ hvml_dom_t* HvmlRuntime::FindInitData(const char* as_s)
 // </init>
 // 
 // This function has not completed.
-bool HvmlRuntime::GetDollarString(hvml_string_t& dollar_s,
+bool HvmlRuntime::GetDollarString(const char* dollar_s,
                                   hvml_string_t* output_s)
 {
-    if ('$' != dollar_s.str[0]) return false;
-    hvml_dom_t* vdom = FindInitData(&dollar_s.str[1]);
+    if ('$' != dollar_s[0]) return false;
+
+    StringArray_t sa;
+    int n = split_string(sa, &dollar_s[1], ".");
+    if (n < 1) {
+        clear_StringArray(sa);
+        return false;
+    }
+
+    hvml_dom_t* vdom = FindInitData(sa[0]);
+    if (! vdom) {
+        clear_StringArray(sa);
+        return false;
+    }
+
+    hvml_jo_value_t* jo = hvml_dom_jo(vdom);
+    if (! jo) {
+        clear_StringArray(sa);
+        return false;
+    }
+
+    JsonQuery jq(jo);
+    for (int i = 1; i < n; i ++) {
+        jq = jq.find(sa[i].str);
+    }
+    if (jq.error()) {
+        clear_StringArray(sa);
+        return false;
+    }
+
+    hvml_string_t s = jq.getString();
+    hvml_string_set(output_s, s.str, s.len);
+    return true;
+}
+
+bool HvmlRuntime::GetDollarString(const char* dollar_s,
+                                  hvml_string_t init_as_s,
+                                  hvml_string_t* output_s)
+{
+    if ('$' != dollar_s[0]) return false;
+
+    hvml_dom_t* vdom = FindInitData(init_as_s);
     if (! vdom) return false;
 
-    A(hvml_dom_type(vdom) == MKDOT(D_JSON), "internal logic error");
     hvml_jo_value_t* jo = hvml_dom_jo(vdom);
-    
-    if (hvml_jo_value_type(jo) == MKJOT(J_STRING)) {
-        const char *s;
-        if (! hvml_jo_string_get(jo, &s)) {
-            hvml_string_set(output_s, s, strlen(s));
-            return true;
-        }
+    if (! jo) return false;
+
+    StringArray_t sa;
+    int n = split_string(sa, &dollar_s[1], ".");
+    if (n < 1) {
+        clear_StringArray(sa);
+        return false;
     }
+
+    JsonQuery jq(jo);
+    for (int i = 0; i < n; i ++) {
+        jq = jq.find(sa[i].str);
+    }
+    if (jq.error()) {
+        clear_StringArray(sa);
+        return false;
+    }
+
+    hvml_string_t s = jq.getString();
+    hvml_string_set(output_s, s.str, s.len);
     return true;
 }
 
-bool HvmlRuntime::GetDollarString(hvml_string_t& dollar_s,
-                                  const char* init_as_s,
-                                  hvml_string_t* output_s)
-{
-    return true;
-}
-
-bool HvmlRuntime::GetDollarString(const char* init_as_s,
+bool HvmlRuntime::GetDollarString(hvml_string_t init_as_s,
                                   const char* templet_s,
                                   hvml_string_t* output_s)
 {
+
+
+    // unfinished
+    
     return true;
 }

@@ -28,11 +28,10 @@ using namespace std;
 
 typedef vector<hvml_string_t>  StringArray_t;
 
-hvml_string_t create_string(const char* str, size_t len);
 hvml_string_t create_trim_string(const char* str, size_t len);
 void clear_StringArray(StringArray_t& sa);
 size_t split_string(StringArray_t& sa,
-                    hvml_string_t src_s,
-                    hvml_string_t delimiter_s);
+                    const char* src_s,
+                    const char* delimiter_s);
 
 #endif //_str_tools_h_

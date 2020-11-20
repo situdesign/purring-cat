@@ -18,7 +18,6 @@
 #ifndef _hvml_runtime_h_
 #define _hvml_runtime_h_
 
-#include "interpreter/interpreter_basic.h"
 #include "interpreter/interpreter_runtime.h"
 
 class HvmlRuntime : public Interpreter_Runtime
@@ -45,13 +44,13 @@ private:
     void TransformArchetypeGroup();
     void TransformIterateGroup();
     void TransformObserveGroup();
-    hvml_dom_t* FindInitData(const char* as_s);
-    bool GetDollarString(hvml_string_t& dollar_s,
+    hvml_dom_t* FindInitData(hvml_string_t as_s);
+    bool GetDollarString(const char* dollar_s,
                          hvml_string_t* output_s);
-    bool GetDollarString(hvml_string_t& dollar_s,
-                         const char* init_as_s,
+    bool GetDollarString(const char* dollar_s,
+                         hvml_string_t init_as_s,
                          hvml_string_t* output_s);
-    bool GetDollarString(const char* init_as_s,
+    bool GetDollarString(hvml_string_t init_as_s,
                          const char* templet_s,
                          hvml_string_t* output_s);
 };

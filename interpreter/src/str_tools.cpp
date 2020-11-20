@@ -19,12 +19,6 @@
 #include "interpreter/str_tools.h"
 #include <algorithm> // for_each
 
-hvml_string_t create_string(const char* str, size_t len) {
-    hvml_string_t ret_s = {NULL, 0};
-    hvml_string_set(&ret_s, str, len);
-    return ret_s;
-}
-
 hvml_string_t create_trim_string(const char* str, size_t len) {
     hvml_string_t ret_s = {NULL, 0};
     hvml_string_set(&ret_s, str, len);
@@ -42,24 +36,25 @@ void clear_StringArray(StringArray_t& sa) {
 }
 
 size_t split_string(StringArray_t& sa,
-                    hvml_string_t src_s,
-                    hvml_string_t delimiter_s)
+                    const char* src_s,
+                    const char* delimiter_s)
 {
-    int n = src_s.len;
-    char* s = src_s.str;
+    int dn = strlen(delimiter_s);
+    int n = strlen(src_s);
+    const char* s = src_s;
     sa.clear();
-    if (delimiter_s.len <= 0) {
+    if (dn <= 0) {
         sa.push_back(create_trim_string(s, n));
         return sa.size();
     }
-    while (s < (src_s.str + n)) {
-        char* p = strstr(s, delimiter_s.str);
+    while (s < (src_s + n)) {
+        char* p = strstr((char *)s, delimiter_s);
         if (! p) {
             sa.push_back(create_trim_string(s, n));
             return sa.size();
         }
         sa.push_back(create_trim_string(s, (p-s)));
-        s += delimiter_s.len;
+        s += dn;
     }
     return sa.size();
 }

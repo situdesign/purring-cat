@@ -18,10 +18,18 @@
 #include "hvml/hvml_log.h"
 #include "JsonQuery.h"
 
-JsonQuery::JsonQuery(hvml_jo_value_t* jo)
-: jo_(jo)
+JsonQuery::JsonQuery(JsonQuery& in)
+: error_(in.error_)
+, jo_(in.jo_)
 {
-    A(jo, "internal logic error");
+    A(jo_, "internal logic error");
+}
+
+JsonQuery::JsonQuery(hvml_jo_value_t* jo)
+: error_(false)
+, jo_(jo)
+{
+    A(jo_, "internal logic error");
 }
 
 JsonQuery& JsonQuery::find(const char* query_s)
@@ -34,9 +42,9 @@ hvml_jo_value_t* JsonQuery::get()
     return NULL;
 }
 
-const char* JsonQuery::getString()
+hvml_string_t JsonQuery::getString()
 {
-    return NULL;
+    return {NULL, 0};
 }
 
 int64_t JsonQuery::getInt()

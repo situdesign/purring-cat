@@ -24,16 +24,19 @@
 class JsonQuery
 {
 public:
+    JsonQuery(JsonQuery& in);
     JsonQuery(hvml_jo_value_t* jo);
     JsonQuery& find(const char* query_s);
     hvml_jo_value_t* get();
-    const char* getString();
+    hvml_string_t getString();
     int64_t getInt();
     bool set(const char* json_s);
     bool set(hvml_jo_value_t* jo);
+    bool error() { return error_; }
 
 private:
     hvml_jo_value_t* jo_;
+    bool error_;
 };
 
 #endif //_json_query_h_

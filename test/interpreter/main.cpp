@@ -25,7 +25,6 @@
 #include "hvml/hvml_to_string.h"
 
 #include "interpreter/ext_tools.h"
-#include "interpreter/interpreter_basic.h"
 #include "interpreter/interpreter_runtime.h"
 
 #include <inttypes.h>
@@ -226,16 +225,6 @@ static int process_hvml(FILE *in,
     hvml_dom_t *dom = hvml_dom_load_from_stream(in);
     if (dom)
     {
-        // This is a test, print as origin file is.
-        //Interpreter_Basic::GetOutput(dom, vdom_part_f);
-        
-        I("----------------- Test to_string");
-        hvml_string_t dom_string = hvml_dom_to_string(dom);
-        fwrite(dom_string.str, 1, dom_string.len, vdom_part_f);
-        hvml_dom_destroy(dom);
-        return 0;
-
-
         hvml_dom_t*      udom_part = NULL;
         MustacheGroup_t  mustache_part;
         ArchetypeGroup_t archetype_part;
@@ -271,9 +260,9 @@ static int process_hvml(FILE *in,
         Interpreter_Runtime::DumpObservePart(&observe_part,
                                              observe_part_f);
 
-        I("................. Dump vdom part");
-        // Test whether the original dom is damaged.
-        Interpreter_Basic::GetOutput(dom, vdom_part_f);
+        I("----------------- Test to_string");
+        hvml_string_t dom_string = hvml_dom_to_string(dom);
+        fwrite(dom_string.str, 1, dom_string.len, vdom_part_f);
 
         hvml_dom_destroy(dom);
         hvml_dom_destroy(udom_part);
