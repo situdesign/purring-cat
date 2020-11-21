@@ -51,7 +51,7 @@
 #include "ace/OS_NS_unistd.h"
 #include "ace/streams.h"
 
-#define ECMO_MESSAGE_LEN_MAX 4096
+#define ECMO_MESSAGE_LEN_MAX 6000
 class IHttpResponse
 {
 public:
@@ -61,10 +61,6 @@ public:
                                    const char* request) = 0;
 
     int GetListenPort(void) { return listen_port_; };
-
-    int info_1_;
-    int info_2_;
-    int info_3_;
 
 private:
     int listen_port_;

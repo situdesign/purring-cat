@@ -118,8 +118,7 @@ Http_Handler::handle_input (ACE_HANDLE handle)
 
         const char echo_format[] = 
             "HTTP/1.0 200 OK\r\n"\
-            "Content-Type: application/json\r\n"\
-            "Vary: Accept-Encoding\r\n"\
+            "Content-Type: text/html; charset=UTF8\r\n"\
             "Content-Length: %d\r\n"\
             "\r\n%s";
 

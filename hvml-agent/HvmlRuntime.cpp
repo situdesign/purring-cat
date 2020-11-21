@@ -56,18 +56,25 @@ size_t HvmlRuntime::GetIndexResponse(char* response,
 {
     if (! m_udom) return 0;
 
-    FILE *out = fopen(html_filename, "wb+");
-    if (! out) {
-        E("failed to create output file: %s", html_filename);
-        return 0;
-    }
+    // 先生成 index.html 然后再读出来，这样是为了调试方便
+    // FILE *out = fopen(html_filename, "wb+");
+    // if (! out) {
+    //     E("failed to create output file: %s", html_filename);
+    //     return 0;
+    // }
 
-    DumpUdomPart(m_udom, out);
+    // DumpUdomPart(m_udom, out);
 
-    fseek(out, 0, SEEK_SET);
-    size_t ret_len = fread(response, 1, response_limit, out);
-    response[ret_len] = '\0';
-    fclose(out);
+    // fseek(out, 0, SEEK_SET);
+    // size_t ret_len = fread(response, 1, response_limit, out);
+    // response[ret_len] = '\0';
+    // fclose(out);
+
+    hvml_string_t s = hvml_dom_to_string(m_udom);
+    strncpy(response, s.str, response_limit);
+    A(s.len < response_limit, "response string is truncated !");
+    int ret_len = s.len;
+    hvml_string_clear(&s);
     return ret_len;
 }
 

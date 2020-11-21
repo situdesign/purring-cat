@@ -20,7 +20,7 @@
 
 #include "HttpServer.h"
 
-#define INFO_MESSAGE_LEN    4096
+#define INFO_MESSAGE_LEN    8192
 class HvmlEcho : public IHttpResponse
 {
 public:
