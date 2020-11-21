@@ -58,7 +58,6 @@ const char *find_mustache(const char *s, size_t *ret_len) {
 const char *find_dollar(const char *s, size_t *ret_len)
 {
     const char *ret = strchr(s, '$');
-    I("+++ +++ +++  ret: %s  +++", ret);
     if (ret) {
         const char *s = ret + 1; // jump over the $
         while (1) {
@@ -147,4 +146,24 @@ hvml_string_t replace_string(hvml_string_t replaced_s,
     ret_s.str[new_length] = '\0';
     ret_s.len = new_length;
     return ret_s;
+}
+
+void remove_substring(hvml_string_t* in_s, const char* sub)
+{
+    int n = strlen(sub);
+    if (!n) return;
+
+    const char* s = in_s->str;
+    char* q = (char *)strstr(s, sub);
+    while (q) {
+        char* p = q + n;
+        do {
+            *q = *p;
+            q++;
+            p++;
+        } while (*q);
+        q = strstr(s, sub);
+    }
+
+    in_s->len = strlen(in_s->str);
 }

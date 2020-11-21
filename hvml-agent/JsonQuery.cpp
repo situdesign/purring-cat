@@ -35,7 +35,7 @@ JsonQuery::JsonQuery(hvml_jo_value_t* jo)
     A(jo_, "internal logic error");
 }
 
-JsonQuery JsonQuery::find(const char* query_s)
+JsonQuery& JsonQuery::find(const char* query_s)
 {
     if (error_) {
         return *this;
@@ -68,7 +68,10 @@ JsonQuery JsonQuery::find(const char* query_s)
             while (child) {
                 JsonQuery jq(child);
                 jq.find(query_s);
-                if (! jq.error()) return jq;
+                if (! jq.error()) {
+                    jo_ = jq.jo_;
+                    return *this;
+                }
                 child = hvml_jo_value_sibling_next(child);
             }
             error_ = true;
@@ -92,7 +95,10 @@ JsonQuery JsonQuery::find(const char* query_s)
             while (child) {
                 JsonQuery jq(child);
                 jq.find(query_s);
-                if (! jq.error()) return jq;
+                if (! jq.error()) {
+                    jo_ = jq.jo_;
+                    return *this;
+                }
                 child = hvml_jo_value_sibling_next(child);
             }
             error_ = true;
@@ -103,6 +109,38 @@ JsonQuery JsonQuery::find(const char* query_s)
         } break;
     }
 
+    return *this;
+}
+
+JsonQuery& JsonQuery::head()
+{
+    if (error_) {
+        return *this;
+    }
+
+    hvml_jo_value_t *child = hvml_jo_value_child(jo_);
+    if (child) {
+        jo_ = child;
+        return *this;
+    }
+
+    error_ = true;
+    return *this;
+}
+
+JsonQuery& JsonQuery::next()
+{
+    if (error_) {
+        return *this;
+    }
+
+    hvml_jo_value_t *child = hvml_jo_value_sibling_next(jo_);
+    if (child) {
+        jo_ = child;
+        return *this;
+    }
+
+    error_ = true;
     return *this;
 }
 
@@ -119,6 +157,14 @@ hvml_string_t JsonQuery::getString()
     if (error_) {
         return create_string("error");
     }
+
+    if (hvml_jo_value_type(jo_) == MKJOT(J_STRING)) {
+        const char* s;
+        if (0 == hvml_jo_string_get(jo_, &s)) {
+            return create_string(s);
+        }
+    }
+
     return hvml_jo_value_to_string(jo_);
 }
 

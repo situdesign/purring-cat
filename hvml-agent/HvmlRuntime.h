@@ -19,6 +19,8 @@
 #define _hvml_runtime_h_
 
 #include "interpreter/interpreter_runtime.h"
+#include "interpreter/str_tools.h"
+#include "JsonQuery.h"
 
 class HvmlRuntime : public Interpreter_Runtime
 {
@@ -43,8 +45,10 @@ private:
     void TransformMustacheGroup();
     void TransformIterateGroup();
     void TransformObserveGroup();
-    hvml_string_t FindArchetypeTemplet(hvml_string_t id_s);
-    hvml_dom_t* FindInitData(hvml_string_t as_s);
+
+    hvml_string_t FindArchetypeTemplet(const char* id_s);
+    hvml_dom_t* FindInitData(const char* as_s);
+
     bool GetDollarString(const char* dollar_s,
                          hvml_string_t* output_s);
     bool GetDollarString(const char* dollar_s,
@@ -53,6 +57,12 @@ private:
     bool GetDollarString(hvml_string_t init_as_s,
                          const char* templet_s,
                          hvml_string_t* output_s);
+
+    bool AppendReplacedDollarTemplet(JsonQuery jq,
+                                     StringArray_t& dollars,
+                                     StringArray_t& dollars_orign,
+                                     const char* templet_s,
+                                     hvml_string_t* out);
 };
 
 #endif //_hvml_runtime_h_

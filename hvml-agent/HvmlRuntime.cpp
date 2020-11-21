@@ -17,9 +17,7 @@
 
 #include "hvml/hvml_string.h"
 #include "hvml/hvml_to_string.h"
-#include "interpreter/str_tools.h"
 #include "HvmlRuntime.h"
-#include "JsonQuery.h"
 
 #include <iostream>
 #include <exception>
@@ -61,7 +59,6 @@ size_t HvmlRuntime::GetIndexResponse(char* response,
     FILE *out = fopen(html_filename, "wb+");
     if (! out) {
         E("failed to create output file: %s", html_filename);
-        
         return 0;
     }
 
@@ -128,31 +125,36 @@ void HvmlRuntime::TransformMustacheGroup()
 
 void HvmlRuntime::TransformIterateGroup()
 {
-    // for_each(m_archetype_part.begin(),
-    //          m_archetype_part.end(),
-    //          [this](archetype_t& item)->void{
-                
-    //             hvml_dom_t *vdom = item.vdom;
+    I("+++ +++ + m_iterate_part size: %d", m_iterate_part.size());
+    for_each(m_iterate_part.begin(),
+             m_iterate_part.end(),
+             [this](iterate_t& item)->void{
 
-    //             hvml_string_t templet_s = hvml_dom_to_string(vdom);
-    //             hvml_string_t replaced_s = {NULL, 0};
+                // 如果需要处理其他类型的 with 属性，在这里添加分支
+                if ('#' == item.s_with.str[0]) {
 
-    //             I("+++ +++ templet_s: %s", templet_s.str);
+                    hvml_string_t templet_s = FindArchetypeTemplet(&item.s_with.str[1]);
+                    if (hvml_string_is_empty(&templet_s)) return;
 
-    //             if (GetDollarString(item.s_id, templet_s.str, &replaced_s)) {
+                    I("+++ +++ + templet_s: %s", templet_s.str);
 
-    //                 I("+++ +++ replaced_s: %s", replaced_s.str);
+                    hvml_string_t replaced_s = {NULL, 0};
 
-    //                 hvml_dom_t *uo = item.udom_owner;
-    //                 hvml_dom_t *udom = hvml_dom_append_content(uo,
-    //                                                            replaced_s.str,
-    //                                                            replaced_s.len);
-    //                 A(udom, "internal logic error");
-    //                 item.udom = udom;
-    //             }
-    //             hvml_string_clear(&templet_s);
-    //             hvml_string_clear(&replaced_s);
-    //          });
+                    if (GetDollarString(item.s_on, templet_s.str, &replaced_s)) {
+
+                        I("+++ +++ + replaced_s: %s", replaced_s.str);
+
+                        hvml_dom_t *uo = item.udom_owner;
+                        hvml_dom_t *udom = hvml_dom_append_content(uo,
+                                                                replaced_s.str,
+                                                                replaced_s.len);
+                        A(udom, "internal logic error");
+                        item.udom = udom;
+                    }
+                    hvml_string_clear(&templet_s);
+                    hvml_string_clear(&replaced_s);
+                }
+             });
 }
 
 void HvmlRuntime::TransformObserveGroup()
@@ -160,11 +162,12 @@ void HvmlRuntime::TransformObserveGroup()
     ;
 }
 
-hvml_string_t HvmlRuntime::FindArchetypeTemplet(hvml_string_t id_s)
+hvml_string_t HvmlRuntime::FindArchetypeTemplet(const char* id_s)
 {
     ArchetypeGroup_t::iterator it = m_archetype_part.begin();
     for (; it != m_archetype_part.end(); it ++) {
-        if (0 == strcmp(it->s_id.str, id_s.str)) {
+        //I("+++ +++ + it->s_id: %s +++ id_s: %s", it->s_id.str, id_s);
+        if (0 == strcmp(it->s_id.str, id_s)) {
             hvml_dom_t *vdom = it->vdom;
             return hvml_dom_to_string(vdom);
         }
@@ -172,11 +175,11 @@ hvml_string_t HvmlRuntime::FindArchetypeTemplet(hvml_string_t id_s)
     return {NULL, 0};
 }
 
-hvml_dom_t* HvmlRuntime::FindInitData(hvml_string_t as_s)
+hvml_dom_t* HvmlRuntime::FindInitData(const char* as_s)
 {
     InitGroup_t::iterator it = m_init_part.begin();
     for (; it != m_init_part.end(); it ++) {
-        if (0 == strcmp(it->s_as.str, as_s.str)) {
+        if (0 == strcmp(it->s_as.str, as_s)) {
             return it->vdom;
             break;
         }
@@ -206,7 +209,7 @@ bool HvmlRuntime::GetDollarString(const char* dollar_s,
         return false;
     }
 
-    hvml_dom_t* vdom = FindInitData(sa[0]);
+    hvml_dom_t* vdom = FindInitData(sa[0].str);
     if (! vdom) {
         clear_StringArray(sa);
         return false;
@@ -238,7 +241,7 @@ bool HvmlRuntime::GetDollarString(const char* dollar_s,
 {
     if ('$' != dollar_s[0]) return false;
 
-    hvml_dom_t* vdom = FindInitData(init_as_s);
+    hvml_dom_t* vdom = FindInitData(init_as_s.str);
     if (! vdom) return false;
 
     hvml_jo_value_t* jo = hvml_dom_jo(vdom);
@@ -268,30 +271,95 @@ bool HvmlRuntime::GetDollarString(hvml_string_t init_as_s,
                                   const char* templet_s,
                                   hvml_string_t* output_s)
 {
-    I("............... init_as_s: %s  ", init_as_s.str);
-    hvml_dom_t* vdom = FindInitData(init_as_s);
+    I("... ... init_as_s: %s  ", init_as_s.str);
+    if ('$' != init_as_s.str[0]) return false;
+    hvml_dom_t* vdom = FindInitData(&init_as_s.str[1]);
     if (! vdom) return false;
 
-    I("............... 2");
     hvml_jo_value_t* jo = hvml_dom_jo(vdom);
     if (! jo) return false;
 
-    StringArray_t sa_dallors;
-    I("............... 3");
-    int n = find_all_dollars(sa_dallors, templet_s);
+    StringArray_t dollars_orign;
+    int n = find_all_dollars(dollars_orign, templet_s);
     if (n <= 0) return false;
 
-    I("............... find_all_dallors: n=%d -----", n);
+    I("... ... find_all_dallors: n=%d -----", n);
 
+    hvml_string_t s_replaced = {NULL, 0};
     JsonQuery jq(jo);
     if (jq.enumerable()) {
         // 可列举的类型采用列表处理方式
-        ;
+
+        StringArray_t dollars;
+        // 复制队列，去掉 $?. 部分
+        for_each(dollars_orign.begin(),
+                 dollars_orign.end(),
+                 [&](hvml_string_t& item)->void{
+                     hvml_string_t s = create_string(item.str);
+                     remove_substring(&s, "$?.");
+                     dollars.push_back(s);
+                 });
+
+        //dump_StringArray(dollars);
+        //dump_StringArray(dollars_orign);
+
+        JsonQuery jqit = jq.head();
+        while (! jqit.error()) {
+            AppendReplacedDollarTemplet(jqit, 
+                                        dollars,
+                                        dollars_orign,
+                                        templet_s,
+                                        &s_replaced);
+            jqit = jqit.next();
+        }
+        clear_StringArray(dollars);
     }
     else {
         // 不可列举的类型就直接替换，替换不成（例如遇到 $?）就直接报错
-        ;
+        AppendReplacedDollarTemplet(jq,
+                                    dollars_orign,
+                                    dollars_orign,
+                                    templet_s,
+                                    &s_replaced);
     }
     
+    clear_StringArray(dollars_orign);
+    if (hvml_string_is_empty(&s_replaced)) return false;
+    *output_s = s_replaced;
+    return true;
+}
+
+bool HvmlRuntime::AppendReplacedDollarTemplet(JsonQuery jq,
+                                              StringArray_t& dollars,
+                                              StringArray_t& dollars_orign,
+                                              const char* templet_s,
+                                              hvml_string_t* out)
+{
+    hvml_string_t s_replaced = create_string(templet_s);
+    int n = dollars.size();
+    for (int i = 0; i < n; i ++) {
+        StringArray_t sa;
+        int size = split_string(sa, dollars[i].str, ".");
+        if (size <= 0) continue;
+
+        JsonQuery jqq = jq;
+        for (int j = 0; j < size; j ++) {
+            I("sa *******  %s\n", sa[j].str);
+            jqq = jqq.find(sa[j].str);
+        }
+        if (jqq.error()) {
+            clear_StringArray(sa);
+            hvml_string_clear(&s_replaced);
+            return false;
+        }
+        hvml_string_t s = jqq.getString();
+        I("jqq *******  %s\n", s.str);
+        s_replaced = replace_string(dollars_orign[i],
+                                    s,
+                                    s_replaced.str);
+        hvml_string_clear(&s);
+    }
+    hvml_string_concat(out, s_replaced.str, s_replaced.len);
+    hvml_string_clear(&s_replaced);
     return true;
 }

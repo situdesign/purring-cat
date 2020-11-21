@@ -26,7 +26,9 @@ class JsonQuery
 public:
     JsonQuery(JsonQuery& in);
     JsonQuery(hvml_jo_value_t* jo);
-    JsonQuery find(const char* query_s);
+    JsonQuery& find(const char* query_s);
+    JsonQuery& head();
+    JsonQuery& next();
     hvml_jo_value_t* get();
     hvml_string_t getString();
     int64_t getInt();

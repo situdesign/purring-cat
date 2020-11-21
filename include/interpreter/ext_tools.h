@@ -42,6 +42,7 @@ char *str_trim(char *s);
 hvml_string_t replace_string(hvml_string_t replaced_s,
                              hvml_string_t after_replaced_s,
                              const char* orig_str);
+void remove_substring(hvml_string_t* in_s, const char* sub);
 
 #ifdef __cplusplus
 }

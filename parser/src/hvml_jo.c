@@ -543,6 +543,8 @@ static int do_hvml_jo_value_traverse(hvml_jo_value_t *jo, traverse_t *tvs) {
                         pop = 0;
                         continue;
                     }
+                    if (lvl == 0) return 0;// normal end up.
+
                     r = apply_traverse_callback(jo, lvl, -1, tvs); // pop
                     if (r) continue;
                     lvl -= 1;
@@ -567,6 +569,8 @@ static int do_hvml_jo_value_traverse(hvml_jo_value_t *jo, traverse_t *tvs) {
                         pop = 0;
                         continue;
                     }
+                    if (lvl == 0) return 0;// normal end up.
+
                     r = apply_traverse_callback(jo, lvl, -1, tvs); // pop
                     if (r) continue;
                     lvl -= 1;
@@ -591,6 +595,8 @@ static int do_hvml_jo_value_traverse(hvml_jo_value_t *jo, traverse_t *tvs) {
                         pop = 0;
                         continue;
                     }
+                    if (lvl == 0) return 0;// normal end up.
+
                     r = apply_traverse_callback(jo, lvl, -1, tvs); // pop
                     if (r) continue;
                     lvl -= 1;
@@ -605,35 +611,38 @@ static int do_hvml_jo_value_traverse(hvml_jo_value_t *jo, traverse_t *tvs) {
                 A(0, "print json type [%d]: not implemented yet", jo->jot);
             } break;
         }
-            A(pop==0, "internal logic error");
-            hvml_jo_value_t *sibling = VAL_NEXT(jo);
-            if (sibling) {
-                A(lvl>0, "internal logic error");
-                jo  = sibling;
-                continue;
+
+        if (lvl == 0) return 0;// normal end up.
+        
+        A(pop==0, "internal logic error");
+        hvml_jo_value_t *sibling = VAL_NEXT(jo);
+        if (sibling) {
+            A(lvl>0, "internal logic error");
+            jo  = sibling;
+            continue;
+        }
+        if (lvl==0) return 0;
+        hvml_jo_value_t *parent = VAL_OWNER(jo);
+        if (parent) {
+            A(lvl>=1, "internal logic error");
+            switch (parent->jot) {
+                case MKJOT(J_OBJECT):
+                case MKJOT(J_ARRAY):
+                case MKJOT(J_OBJECT_KV): {
+                    r = apply_traverse_callback(parent, lvl, -1, tvs); // pop
+                    if (r) continue;
+                    lvl -= 1;
+                    pop  = parent->jot + 1;
+                    jo   = parent;
+                    continue;
+                } break;
+                default: {
+                    A(0, "internal logic error");
+                } break;
             }
-            if (lvl==0) return 0;
-            hvml_jo_value_t *parent = VAL_OWNER(jo);
-            if (parent) {
-                A(lvl>=1, "internal logic error");
-                switch (parent->jot) {
-                    case MKJOT(J_OBJECT):
-                    case MKJOT(J_ARRAY):
-                    case MKJOT(J_OBJECT_KV): {
-                        r = apply_traverse_callback(parent, lvl, -1, tvs); // pop
-                        if (r) continue;
-                        lvl -= 1;
-                        pop  = parent->jot + 1;
-                        jo   = parent;
-                        continue;
-                    } break;
-                    default: {
-                        A(0, "internal logic error");
-                    } break;
-                }
-            }
-            A(lvl==0, "internal logic error");
-            return 0;
+        }
+        A(lvl==0, "internal logic error");
+        return 0;
     }
 
     return r ? -1 : 0;

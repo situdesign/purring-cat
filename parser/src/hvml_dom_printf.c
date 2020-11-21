@@ -81,7 +81,8 @@ static void traverse_for_printf(hvml_dom_t *dom, int lvl, int tag_open_close, vo
         case MKDOT(D_TEXT):
         {
             const char *text = hvml_dom_text(dom);
-            hvml_dom_str_serialize(text, strlen(text), parg->out);
+            fprintf(parg->out, text);
+            //hvml_dom_str_serialize(text, strlen(text), parg->out);
             parg->lvl = lvl;
         } break;
         case MKDOT(D_JSON):

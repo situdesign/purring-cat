@@ -42,6 +42,18 @@ void clear_StringArray(StringArray_t& sa) {
              });
 }
 
+void dump_StringArray(StringArray_t&sa)
+{
+    I(">>> size: %d\n", sa.size());
+
+    for_each(sa.begin(),
+             sa.end(),
+             [](hvml_string_t& item)->void{
+                 I(">>> %s\n", item.str);
+             });
+    I(">>> -------------end\n");
+}
+
 size_t split_string(StringArray_t& sa,
                     const char* src_s,
                     const char* delimiter_s)
@@ -70,15 +82,14 @@ size_t find_all_dollars(StringArray_t& sa,
                         const char* in)
 {
     sa.clear();
+    char* s = (char *)in;
     const char* p = NULL;
     size_t n = 0;
-    I("+++ +++ + in: %s  +++", in);
-    p = find_dollar(in, &n);
+    p = find_dollar(s, &n);
     while (p) {
-        I("+++ +++   p: %*s  +++", n, p);
         sa.push_back(create_trim_string(p, n));
-        in += n;
-        p = find_dollar(in, &n);
+        s = (char *)p + n;
+        p = find_dollar(s, &n);
     }
     return sa.size();
 }
