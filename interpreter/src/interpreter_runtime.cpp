@@ -256,7 +256,9 @@ void Interpreter_Runtime::traverse_for_divide(hvml_dom_t *dom,
                     }
                     else if (0 == strcmp("observe", tag_name)) {
                         I("----- <observe> ---");
-                        AddNewObserve(param->observe_part, dom);
+                        AddNewObserve(param->observe_part,
+                                      dom,
+                                      param->udom_curr_ptr);
                         param->vdom_ignore = dom;
                     }
                     else {
@@ -471,7 +473,8 @@ void Interpreter_Runtime::AddNewInit(InitGroup_t* init_part,
 }
 
 void Interpreter_Runtime::AddNewObserve(ObserveGroup_t* observe_part,
-                                        hvml_dom_t* vdom)
+                                        hvml_dom_t* vdom,
+                                        hvml_dom_t* udom_owner)
 {
     observe_t new_observe;
 
@@ -492,5 +495,6 @@ void Interpreter_Runtime::AddNewObserve(ObserveGroup_t* observe_part,
     }
 
     new_observe.vdom = hvml_dom_child(vdom);
+    new_observe.udom_owner = udom_owner;
     observe_part->push_back(new_observe);
 }

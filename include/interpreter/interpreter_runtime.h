@@ -69,13 +69,11 @@ typedef struct archetype_s {
     hvml_string_t s_id;
     hvml_dom_t* vdom;
     hvml_dom_t* udom_owner;
-    hvml_dom_t* udom;
 
     archetype_s()
     : s_id({NULL, 0})
     , vdom(NULL)
     , udom_owner(NULL)
-    , udom(NULL)
     {}
 } archetype_t;
 
@@ -116,12 +114,16 @@ typedef struct observe_s {
     hvml_string_t s_to;
     OBSERVE_FOR_TYPE en_for;
     hvml_dom_t* vdom;
+    hvml_dom_t* udom_owner;
+    hvml_dom_t* udom;
 
     observe_s()
     : s_on({NULL, 0})
     , s_to({NULL, 0})
     , en_for(for_UNKNOWN)
     , vdom(NULL)
+    , udom_owner(NULL)
+    , udom(NULL)
     {}
 } observe_t;
 
@@ -187,7 +189,8 @@ private:
                            hvml_dom_t* dom);
 
     static void AddNewObserve(ObserveGroup_t* observe_part,
-                              hvml_dom_t* dom);
+                              hvml_dom_t* dom,
+                              hvml_dom_t* udom_owner);
 };
 
 #endif //_interpreter_runtime_h_
