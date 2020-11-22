@@ -42,7 +42,7 @@ void clear_StringArray(StringArray_t& sa) {
              });
 }
 
-void dump_StringArray(StringArray_t&sa)
+void dump_StringArray(StringArray_t& sa)
 {
     I(">>> size: %d\n", sa.size());
 
@@ -73,7 +73,7 @@ size_t split_string(StringArray_t& sa,
             return sa.size();
         }
         sa.push_back(create_trim_string(s, (p-s)));
-        s += dn;
+        s = (p + dn);
     }
     return sa.size();
 }

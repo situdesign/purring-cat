@@ -28,8 +28,10 @@ HvmlEcho::HvmlEcho(int listen_port, HvmlRuntime& runtime)
 char* HvmlEcho::GetHttpResponse (int* info_len,
                                  const char* request)
 {
-    if (0 == strcmp(request, "/index")) {
-        size_t res_len = runtime_.GetIndexResponse(info_message_, INFO_MESSAGE_LEN);
+    if (0 == strncmp(request, "/index", 6)) {
+        size_t res_len = runtime_.GetIndexResponse(request + 6,// skip the "/index/"
+                                                   info_message_,
+                                                   INFO_MESSAGE_LEN);
         return (res_len > 0) ? info_message_ : NULL;
     }
 

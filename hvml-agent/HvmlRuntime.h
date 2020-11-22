@@ -27,7 +27,8 @@ class HvmlRuntime : public Interpreter_Runtime
 public:
     HvmlRuntime(FILE *hvml_in_f);
     ~HvmlRuntime();
-    size_t GetIndexResponse(char* response,
+    size_t GetIndexResponse(const char* request,
+                            char* response,
                             size_t response_limit);
 
     bool Refresh(void);

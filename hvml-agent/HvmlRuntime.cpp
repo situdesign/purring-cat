@@ -51,32 +51,42 @@ HvmlRuntime::~HvmlRuntime()
 
 const char html_filename[] = "index/index.html";
 
-size_t HvmlRuntime::GetIndexResponse(char* response,
+size_t HvmlRuntime::GetIndexResponse(const char* request,
+                                     char* response,
                                      size_t response_limit)
 {
     if (! m_udom) return 0;
 
-    // 先生成 index.html 然后再读出来，这样是为了调试方便
-    FILE *out = fopen(html_filename, "wb+");
-    if (! out) {
-        E("failed to create output file: %s", html_filename);
-        return 0;
+    if (0 == strlen(request)) {
+        // 先生成 index.html 然后再读出来，这样是为了调试方便
+        FILE *out = fopen(html_filename, "wb+");
+        if (! out) {
+            E("failed to create output file: %s", html_filename);
+            return 0;
+        }
+
+        DumpUdomPart(m_udom, out);
+
+        fseek(out, 0, SEEK_SET);
+        size_t ret_len = fread(response, 1, response_limit, out);
+        response[ret_len] = '\0';
+        fclose(out);
+
+        // 这是实际使用的代码
+        // hvml_string_t s = hvml_dom_to_string(m_udom);
+        // A(s.len < response_limit, "response string is truncated !");
+        // strncpy(response, s.str, response_limit);
+        // size_t ret_len = s.len;
+        // hvml_string_clear(&s);
+        return ret_len;
     }
 
-    DumpUdomPart(m_udom, out);
+    StringArray_t sa;
+    int n = split_string(sa, request+1, "/");
+    I("^^^^^^^ request: %s ^^^^^^^^", request+1);
 
-    fseek(out, 0, SEEK_SET);
-    size_t ret_len = fread(response, 1, response_limit, out);
-    response[ret_len] = '\0';
-    fclose(out);
 
-    // 这是实际使用的代码
-    // hvml_string_t s = hvml_dom_to_string(m_udom);
-    // A(s.len < response_limit, "response string is truncated !");
-    // strncpy(response, s.str, response_limit);
-    // size_t ret_len = s.len;
-    // hvml_string_clear(&s);
-    return ret_len;
+    return 0;
 }
 
 bool HvmlRuntime::Refresh(void)
@@ -169,11 +179,11 @@ void HvmlRuntime::TransformObserveGroup()
 {
     const char templet_class[] = "var x=document.getElementsByClassName(\"%s\");"\
                                  "for(var i=0; i<x.length; i++) {"\
-                                 "x[i].on%s=function(){document.location.href=\"index/%d/%s\";};"\
+                                 "x[i].on%s=function(){document.location.href=\"index/%d/%s/\"+this.innerText;};"\
                                  "}";
 
     const char templet_id[] = "document.getElementById(\"%s\").on%s=function()"\
-                            "{document.location.href=\"index/%d/%s\";};";
+                            "{document.location.href=\"index/%d/%s\"+this.innerText;};";
 
     char script_buffer[256];
 
