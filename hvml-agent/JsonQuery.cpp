@@ -210,12 +210,15 @@ double JsonQuery::getDouble()
     }
 }
 
-bool JsonQuery::set(const char* json_s)
+bool JsonQuery::setString(const char* json_s)
 {
     if (error_) {
         return false;
     }
 
+    if (jo_) {
+        hvml_jo_set_string(jo_, json_s, strlen(json_s));
+    }
     return true;
 }
 
@@ -224,7 +227,7 @@ bool JsonQuery::set(hvml_jo_value_t* jo)
     if (error_) {
         return false;
     }
-    
+    // unfinished
     return true;
 }
 

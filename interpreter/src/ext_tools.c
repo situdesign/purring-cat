@@ -124,8 +124,8 @@ hvml_string_t replace_string(hvml_string_t replaced_s,
                              const char* orig_str)
 {
     hvml_string_t ret_s = {NULL, 0};
-    size_t orign_len = strlen(orig_str);
-    size_t new_length = orign_len
+    int orign_len = strlen(orig_str);
+    int new_length = orign_len
                         + after_replaced_s.len
                         - replaced_s.len;
     if (new_length <= 0) return ret_s;
@@ -137,12 +137,14 @@ hvml_string_t replace_string(hvml_string_t replaced_s,
     const char* q = orig_str 
                     + (p - ret_s.str)
                     + replaced_s.len;
+
     memcpy ((void*)p, after_replaced_s.str, after_replaced_s.len);
     p += after_replaced_s.len;
     size_t tail_length = new_length - (p - ret_s.str);
     if (tail_length > 0) {
         memcpy (p, q, tail_length);
     }
+
     ret_s.str[new_length] = '\0';
     ret_s.len = new_length;
     return ret_s;

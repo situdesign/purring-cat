@@ -93,7 +93,7 @@
                 { "letters": "-", "class": "c_blue subtraction sym" },
                 { "letters": "0", "class": "number sym" },
                 { "letters": "00", "class": "number sym" },
-                { "letters": ".", "class": "number sym" },
+                { "letters": "·", "class": "number sym" },
                 { "letters": "%", "class": "c_blue percent sym" },
                 { "letters": "=", "class": "c_yellow equal" },
             ]

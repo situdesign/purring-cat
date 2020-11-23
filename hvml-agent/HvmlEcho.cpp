@@ -19,8 +19,8 @@
 #include "HttpServer.h"
 #include "HvmlEcho.h"
 
-HvmlEcho::HvmlEcho(int listen_port, HvmlRuntime& runtime)
-    : IHttpResponse(listen_port)
+HvmlEcho::HvmlEcho(HvmlRuntime& runtime)
+    : IHttpResponse(runtime.port())
     , runtime_(runtime)
 {
 }

@@ -24,7 +24,7 @@
 class HvmlEcho : public IHttpResponse
 {
 public:
-    HvmlEcho(int listen_port, HvmlRuntime& runtime);
+    HvmlEcho(HvmlRuntime& runtime);
     char* GetHttpResponse (int* info_len,
                            const char* request);
 

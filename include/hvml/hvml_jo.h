@@ -114,6 +114,8 @@ hvml_jo_value_t* hvml_jo_gen_parse_end(hvml_jo_gen_t *gen);
 // load a json value from file stream
 hvml_jo_value_t* hvml_jo_value_load_from_stream(FILE *in);
 
+void hvml_jo_set_string(hvml_jo_value_t* jo, const char *str, size_t len);
+
 #ifdef __cplusplus
 }
 #endif

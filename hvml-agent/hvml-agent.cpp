@@ -46,19 +46,14 @@ int ACE_TMAIN(int argc, char* argv[])
         return 1;
     }
 
-    HvmlRuntime runtime(hvml_in_f);
-    if (! runtime.Refresh()) {
-        E("failed to refresh HVML file: %s", file_in);
-        return 1;
-    }
-
-    HvmlEcho http_echo(LISTEN_PORT, runtime);
+    HvmlRuntime runtime(hvml_in_f, LISTEN_PORT);
+    HvmlEcho http_echo(runtime);
     HttpServer::StartServer(&http_echo);
     ACE_DEBUG((LM_DEBUG, ACE_TEXT("Start HttpEcho\n")));
 
     // start firefox
     char cmdline[64];
-    snprintf(cmdline, sizeof cmdline, "firefox localhost:%d/index", LISTEN_PORT);
+    snprintf(cmdline, sizeof cmdline, "firefox %s", runtime.url_index());
     system (cmdline); // system function would not return until Firefox shut down.
 
     // wait_for_quit();

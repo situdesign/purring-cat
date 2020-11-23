@@ -33,7 +33,7 @@ public:
     hvml_string_t getString();
     int64_t getInt();
     double getDouble();
-    bool set(const char* json_s);
+    bool setString(const char* json_s);
     bool set(hvml_jo_value_t* jo);
     bool error() { return error_; }
     bool enumerable();

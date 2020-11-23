@@ -23,9 +23,10 @@
 #include <exception>
 #include <algorithm> // for_each
 
-HvmlRuntime::HvmlRuntime(FILE *hvml_in_f)
+HvmlRuntime::HvmlRuntime(FILE *hvml_in_f, int listen_port)
 : m_vdom(NULL)
 , m_udom(NULL)
+, listen_port_(listen_port)
 {
     m_vdom = hvml_dom_load_from_stream(hvml_in_f);
     GetRuntime(m_vdom,
@@ -35,6 +36,7 @@ HvmlRuntime::HvmlRuntime(FILE *hvml_in_f)
                &m_iterate_part,
                &m_init_part,
                &m_observe_part);
+    snprintf(url_base_, URL_LEN_MAX, "http://localhost:%d/index", listen_port_);
 }
 
 HvmlRuntime::~HvmlRuntime()
@@ -48,45 +50,35 @@ HvmlRuntime::~HvmlRuntime()
     m_observe_part.clear();
 }
 
-
-const char html_filename[] = "index/index.html";
-
 size_t HvmlRuntime::GetIndexResponse(const char* request,
                                      char* response,
                                      size_t response_limit)
 {
     if (! m_udom) return 0;
 
-    if (0 == strlen(request)) {
-        // 先生成 index.html 然后再读出来，这样是为了调试方便
-        FILE *out = fopen(html_filename, "wb+");
-        if (! out) {
-            E("failed to create output file: %s", html_filename);
-            return 0;
-        }
-
-        DumpUdomPart(m_udom, out);
-
-        fseek(out, 0, SEEK_SET);
-        size_t ret_len = fread(response, 1, response_limit, out);
-        response[ret_len] = '\0';
-        fclose(out);
-
-        // 这是实际使用的代码
-        // hvml_string_t s = hvml_dom_to_string(m_udom);
-        // A(s.len < response_limit, "response string is truncated !");
-        // strncpy(response, s.str, response_limit);
-        // size_t ret_len = s.len;
-        // hvml_string_clear(&s);
-        return ret_len;
+    if (0 == strlen(request)) {// 无参数
+        Refresh();
+        return RebuildHtml(response, response_limit);
     }
 
+    // 参数形式诸如 3/test/C
     StringArray_t sa;
     int n = split_string(sa, request+1, "/");
-    I("^^^^^^^ request: %s ^^^^^^^^", request+1);
+    if (n < 1) return 0;
 
+    int obv_index = atoi(sa[0].str);
+    hvml_string_clear(&sa[0]);
+    sa.erase(sa.begin());
 
-    return 0;
+    // 去掉第一个参数，诸如 test/C
+    int ret_len = 0;
+    if (ObserveProc(obv_index, sa)) {
+        Refresh();
+        ret_len = RebuildHtml(response, response_limit);
+    }
+
+    clear_StringArray(sa);
+    return ret_len;
 }
 
 bool HvmlRuntime::Refresh(void)
@@ -103,6 +95,33 @@ bool HvmlRuntime::Refresh(void)
     return true;
 }
 
+bool HvmlRuntime::RebuildHtml(char* response, size_t response_limit)
+{
+    const char html_filename[] = "index/index.html";
+
+    // 先生成 index.html 然后再读出来，这样是为了调试方便
+    FILE *out = fopen(html_filename, "wb+");
+    if (! out) {
+        E("failed to create output file: %s", html_filename);
+        return 0;
+    }
+
+    DumpUdomPart(m_udom, out);
+
+    fseek(out, 0, SEEK_SET);
+    size_t ret_len = fread(response, 1, response_limit, out);
+    response[ret_len] = '\0';
+    fclose(out);
+
+    // 这是实际使用的代码
+    // hvml_string_t s = hvml_dom_to_string(m_udom);
+    // A(s.len < response_limit, "response string is truncated !");
+    // strncpy(response, s.str, response_limit);
+    // size_t ret_len = s.len;
+    // hvml_string_clear(&s);
+    return ret_len;
+}
+
 void HvmlRuntime::TransformMustacheGroup()
 {
     for_each(m_mustache_part.begin(),
@@ -114,11 +133,12 @@ void HvmlRuntime::TransformMustacheGroup()
 
                 if (GetDollarString(item.s_inner_str.str, &s)) {
 
+                    hvml_dom_t *vdom = item.vdom;
                     hvml_dom_t *udom = item.udom;
                     switch (hvml_dom_type(udom))
                     {
                         case MKDOT(D_ATTR): {
-                            const char *val = hvml_dom_attr_val(udom);
+                            const char *val = hvml_dom_attr_val(vdom);
                             I("+++ val: %s", val);
                             I("+++ mustache: %s", s.str);
                             s_replaced = replace_string(item.s_full_str, s, val);
@@ -128,7 +148,7 @@ void HvmlRuntime::TransformMustacheGroup()
                         break;
 
                         case MKDOT(D_TEXT): {
-                            const char *text = hvml_dom_text(udom);
+                            const char *text = hvml_dom_text(vdom);
                             s_replaced = replace_string(item.s_full_str, s, text);
                             hvml_dom_set_text(udom, s_replaced.str, s_replaced.len);
                         }
@@ -154,15 +174,18 @@ void HvmlRuntime::TransformIterateGroup()
                     hvml_string_t templet_s = FindArchetypeTemplet(&item.s_with.str[1]);
                     if (hvml_string_is_empty(&templet_s)) return;
 
-                    I("+++ +++ + templet_s: %s", templet_s.str);
+                    //I("+++ +++ + templet_s: %s", templet_s.str);
 
                     hvml_string_t replaced_s = {NULL, 0};
 
                     if (GetDollarString(item.s_on, templet_s.str, &replaced_s)) {
 
-                        I("+++ +++ + replaced_s: %s", replaced_s.str);
+                        //I("+++ +++ + replaced_s: %s", replaced_s.str);
 
                         hvml_dom_t *uo = item.udom_owner;
+                        if (item.udom) {
+                            hvml_dom_destroy(item.udom);
+                        }
                         hvml_dom_t *udom = hvml_dom_append_content(uo,
                                                                 replaced_s.str,
                                                                 replaced_s.len);
@@ -179,11 +202,11 @@ void HvmlRuntime::TransformObserveGroup()
 {
     const char templet_class[] = "var x=document.getElementsByClassName(\"%s\");"\
                                  "for(var i=0; i<x.length; i++) {"\
-                                 "x[i].on%s=function(){document.location.href=\"index/%d/%s/\"+this.innerText;};"\
+                                 "x[i].on%s=function(){window.location.href=\"%s/%d/%s/\"+this.innerText;};"\
                                  "}";
 
     const char templet_id[] = "document.getElementById(\"%s\").on%s=function()"\
-                            "{document.location.href=\"index/%d/%s\"+this.innerText;};";
+                            "{window.location.href=\"%s/%d/%s\"+this.innerText;};";
 
     char script_buffer[256];
 
@@ -201,6 +224,7 @@ void HvmlRuntime::TransformObserveGroup()
                                     templet_class,
                                     &obv.s_on.str[1],
                                     observe_for_to_string(obv.en_for),
+                                    url_base_,
                                     i,
                                     obv.s_to.str);
                 script_buffer[len] = '\0';
@@ -212,6 +236,7 @@ void HvmlRuntime::TransformObserveGroup()
                                     templet_id,
                                     &obv.s_on.str[1],
                                     observe_for_to_string(obv.en_for),
+                                    url_base_,
                                     i,
                                     obv.s_to.str);
                 script_buffer[len] = '\0';
@@ -351,7 +376,7 @@ bool HvmlRuntime::GetDollarString(hvml_string_t init_as_s,
                                   const char* templet_s,
                                   hvml_string_t* output_s)
 {
-    I("... ... init_as_s: %s  ", init_as_s.str);
+    //I("... ... init_as_s: %s  ", init_as_s.str);
     if ('$' != init_as_s.str[0]) return false;
     hvml_dom_t* vdom = FindInitData(&init_as_s.str[1]);
     if (! vdom) return false;
@@ -363,7 +388,7 @@ bool HvmlRuntime::GetDollarString(hvml_string_t init_as_s,
     int n = find_all_dollars(dollars_orign, templet_s);
     if (n <= 0) return false;
 
-    I("... ... find_all_dallors: n=%d -----", n);
+    //I("... ... find_all_dallors: n=%d -----", n);
 
     hvml_string_t s_replaced = {NULL, 0};
     JsonQuery jq(jo);
@@ -424,7 +449,7 @@ bool HvmlRuntime::AppendReplacedDollarTemplet(JsonQuery jq,
 
         JsonQuery jqq = jq;
         for (int j = 0; j < size; j ++) {
-            I("sa *******  %s\n", sa[j].str);
+            //I("sa *******  %s\n", sa[j].str);
             jqq = jqq.find(sa[j].str);
         }
         if (jqq.error()) {
@@ -433,7 +458,7 @@ bool HvmlRuntime::AppendReplacedDollarTemplet(JsonQuery jq,
             return false;
         }
         hvml_string_t s = jqq.getString();
-        I("jqq *******  %s\n", s.str);
+        //I("jqq *******  %s\n", s.str);
         s_replaced = replace_string(dollars_orign[i],
                                     s,
                                     s_replaced.str);
@@ -441,5 +466,143 @@ bool HvmlRuntime::AppendReplacedDollarTemplet(JsonQuery jq,
     }
     hvml_string_concat(out, s_replaced.str, s_replaced.len);
     hvml_string_clear(&s_replaced);
+    return true;
+}
+
+bool HvmlRuntime::ObserveProc(int obv_index, StringArray_t& params)
+{
+    A(obv_index >= 0 && obv_index < m_observe_part.size(), "internal logic error");
+
+    hvml_dom_t* vdom = FindInitData("expression");
+    if (! vdom) return false;
+    hvml_jo_value_t* jo = hvml_dom_jo(vdom);
+    if (! jo) return false;
+
+    JsonQuery jq(jo);
+    hvml_string_t s = jq.getString();
+    I("^^^^^^ $expression: %s           ", s.str);
+    dump_StringArray(params);
+
+    switch (obv_index) {
+
+        case 0: { // .clear
+            jq.setString("0");
+        } break;
+
+        case 1: { // .sym
+            hvml_string_t sym = params[1];
+            I("^^^^^^ sym: %s           ", sym.str);
+
+            if (0 == strcmp(s.str, "0")) {
+                char c = sym.str[0];
+                switch (c) {
+                    case '+':
+                    case '-':
+                    case '%': {
+                        if (0 == strcmp(sym.str, "%C2%B7")) {
+                            if (s.str[s.len-1] != '.') {
+                                hvml_string_concat(&s, ".", 1);
+                            }
+                        }
+                    } break;
+                    case '0': {
+                        // do nothing
+                    } break;
+                    default: {
+                        hvml_string_set(&s, sym.str, sym.len);
+                    }
+                }
+            }
+            else {
+                char c = sym.str[0];
+                switch (c) {
+                    case '+':
+                    case '-':
+                    case '%': {
+                        if (0 == strcmp(sym.str, "%C3%97")) {
+                            c = 'x';
+                        }
+                        else if (0 == strcmp(sym.str, "%C3%B7")) {
+                            c = '/';
+                        }
+                        else if (0 == strcmp(sym.str, "%C2%B7")) {
+                            // c = '.';
+                            if (s.str[s.len-1] != '.') {
+                                hvml_string_concat(&s, ".", 1);
+                            }
+                            break;
+                        }
+                        switch (s.str[s.len-1]) {
+                            case 'x':
+                            case '/':
+                            case '+':
+                            case '-':
+                            case '%':
+                            {
+                                s.str[s.len-1] = c;
+                            } break;
+                            default: {
+                                hvml_string_concat(&s, &c, 1);
+                            }
+                        }
+                    } break;
+                    case '0': {
+                        switch (s.str[s.len-1]) {
+                            case 'x':
+                            case '/':
+                            case '+':
+                            case '-':
+                            case '%':
+                            {   // 00 -> 0
+                                hvml_string_concat(&s, "0", 1);
+                            } break;
+                            default: {
+                                if (s.str[s.len-1] == '0' &&
+                                    s.len > 2) {
+                                    switch (s.str[s.len-2]) {
+                                        case 'x':
+                                        case '/':
+                                        case '+':
+                                        case '-':
+                                        case '%':
+                                        {    // +0
+                                            ;// do nothing
+                                        } break;
+                                        default: {
+                                            hvml_string_concat(&s, sym.str, sym.len);
+                                        }
+                                    }
+                                }
+                                else {
+                                    hvml_string_concat(&s, sym.str, sym.len);
+                                }
+                            }
+                        }
+                    } break;
+                    default: {
+                        hvml_string_concat(&s, sym.str, sym.len);
+                    }
+                }
+            }
+            jq.setString(s.str);
+        } break;
+
+        case 2: { // .backspace
+            if (s.len > 1) {
+                s.str[s.len-1] = '\0';
+                jq.setString(s.str);
+            }
+            else {
+                jq.setString("0");
+            }
+        } break;
+
+        case 3: { // .equal
+            ;
+        } break;
+    }
+
+    I("@@@@@@ $expression: %s           ", s.str);
+    hvml_string_clear(&s);
     return true;
 }

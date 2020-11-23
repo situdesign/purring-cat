@@ -921,6 +921,16 @@ hvml_jo_value_t* hvml_jo_value_load_from_stream(FILE *in) {
     return NULL;
 }
 
+void hvml_jo_set_string(hvml_jo_value_t* jo, const char *str, size_t len)
+{
+    A(hvml_jo_value_type(jo) == MKJOT(J_STRING), "internal logic error");
+    if (jo->jstr.str) free(jo->jstr.str);
+    jo->jstr.str = (char*)malloc(len+1);
+    memcpy(jo->jstr.str, str, len);
+    jo->jstr.str[len] = '\0';
+    jo->jstr.len = len;
+}
+
 
 
 

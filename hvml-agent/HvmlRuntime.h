@@ -22,18 +22,21 @@
 #include "interpreter/str_tools.h"
 #include "JsonQuery.h"
 
+#define URL_LEN_MAX 256
 class HvmlRuntime : public Interpreter_Runtime
 {
 public:
-    HvmlRuntime(FILE *hvml_in_f);
+    HvmlRuntime(FILE *hvml_in_f, int listen_port);
     ~HvmlRuntime();
+    int port() { return listen_port_; }
+    const char* url_index() { return url_base_; };
     size_t GetIndexResponse(const char* request,
                             char* response,
                             size_t response_limit);
 
-    bool Refresh(void);
-
 private:
+    int listen_port_;
+    char url_base_[URL_LEN_MAX];
     hvml_dom_t *m_vdom; // origin hvml dom
     hvml_dom_t *m_udom; // dom for display
     MustacheGroup_t  m_mustache_part;
@@ -43,6 +46,9 @@ private:
     ObserveGroup_t   m_observe_part;
 
 private:
+    bool Refresh(void);
+    bool RebuildHtml(char* response, size_t response_limit);
+
     void TransformMustacheGroup();
     void TransformIterateGroup();
     void TransformObserveGroup();
@@ -64,6 +70,8 @@ private:
                                      StringArray_t& dollars_orign,
                                      const char* templet_s,
                                      hvml_string_t* out);
+
+    bool ObserveProc(int obv_index, StringArray_t& params);
 };
 
 #endif //_hvml_runtime_h_
