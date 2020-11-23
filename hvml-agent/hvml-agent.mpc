@@ -18,6 +18,7 @@ project(hvml-agent) : aceexe {
         HttpServer.cpp
         HvmlEcho.cpp
         JsonQuery.cpp
+        Evaluator.cpp
         HvmlRuntime.cpp
     }
 
@@ -25,6 +26,7 @@ project(hvml-agent) : aceexe {
         HttpServer.h
         HvmlEcho.h
         JsonQuery.h
+        Evaluator.h
         HvmlRuntime.h
     }
 }
