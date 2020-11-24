@@ -40,6 +40,7 @@ private:
 
 public:
     static double Parser(const char* val, const char** error);
+    static void DumpTree(Evaluator* e, int lvl);
 
 public:
     Evaluator(const char* val, size_t len, int string_pos);
@@ -55,8 +56,8 @@ private:
     Evaluator* left_;
     Evaluator* right_;
     Operator_en op_;
-    char *m_sValueBuffer;
-    int m_nStringPosition; // for error_info
+    char *value_buffer_;
+    int string_position_; // for error_info
 };
 
 #endif //_evaluator_h_

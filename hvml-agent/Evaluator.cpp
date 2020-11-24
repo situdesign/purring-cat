@@ -16,6 +16,7 @@
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 #include "interpreter/str_tools.h"
+#include "hvml/hvml_log.h"
 #include "Evaluator.h"
 #include <stdlib.h>
 
@@ -33,11 +34,11 @@ double Evaluator::Parser(const char* val, const char** error)
             case '+':
             case '-': {
                 if (root == NULL) {
-                    Evaluator* va = new Evaluator(q, p-q-1, q-val);
+                    Evaluator* va = new Evaluator(q, p-q, q-val);
                     root = va;
                 }
                 else {
-                    Evaluator* va = new Evaluator(q, p-q-1, q-val);
+                    Evaluator* va = new Evaluator(q, p-q, q-val);
                     if (root->right_) {
                         root->right_->right_ = va;
                     }
@@ -48,18 +49,18 @@ double Evaluator::Parser(const char* val, const char** error)
                 Evaluator* op = new Evaluator(*p, p-val);
                 op->left_ = root;
                 root = op;
-                q = p;
+                q = p+1;
             } break;
 
             case 'x':
             case '/':
             case '%': {
                 if (root == NULL) {
-                    Evaluator* va = new Evaluator(q, p-q-1, q-val);
+                    Evaluator* va = new Evaluator(q, p-q, q-val);
                     root = va;
                 }
                 else {
-                    Evaluator* va = new Evaluator(q, p-q-1, q-val);
+                    Evaluator* va = new Evaluator(q, p-q, q-val);
                     if (root->right_) {
                         root->right_->right_ = va;
                     }
@@ -67,8 +68,13 @@ double Evaluator::Parser(const char* val, const char** error)
                         root->right_ = va;
                     }
                 }
-                if (root->op_ == OP_ADD ||
-                    root->op_ == OP_SUB) {
+                if (root->type_ == TYPE_VALUE) {
+                    Evaluator* op = new Evaluator(*p, p-val);
+                    op->left_ = root;
+                    root = op;
+                }
+                else if (root->op_ == OP_ADD
+                      || root->op_ == OP_SUB) {
                     Evaluator* op = new Evaluator(*p, p-val);
                     op->left_ = root->right_;
                     root->right_ = op;
@@ -78,23 +84,25 @@ double Evaluator::Parser(const char* val, const char** error)
                     op->left_ = root;
                     root = op;
                 }
-                q = p;
+                q = p+1;
             } break;
 
             default: {
-                p ++;
             }
         }
+        p ++;
     }
 
     if (root) {
-        Evaluator* va = new Evaluator(q, p-q-1, q-val);
+        Evaluator* va = new Evaluator(q, p-q, q-val);
         if (root->right_) {
             root->right_->right_ = va;
         }
         else {
             root->right_ = va;
         }
+
+        DumpTree(root, 0);
 
         double ret = root->getValue();
         delete root;
@@ -107,26 +115,59 @@ double Evaluator::Parser(const char* val, const char** error)
             return 0.0;
         }
     }
-    
+
     snprintf(error_info, sizeof(error_info), "No effective operator.");
     return 0.0;
 }
 
+void Evaluator::DumpTree(Evaluator* e, int lvl)
+{
+    // 左节点往下走，右节点往右走
+    if (e->type_ == TYPE_VALUE) {
+        printf("(%s)\n", e->value_buffer_);
+    }
+    else {
+        switch (e->op_) {
+            case OP_ADD: printf("<+>"); break;
+            case OP_SUB: printf("<->"); break;
+            case OP_MUL: printf("<x>"); break;
+            case OP_DIV: printf("</>"); break;
+            case OP_MOD: printf("<%>"); break;
+        }
+        if (e->right_) {
+            printf(" ---> ");
+            DumpTree(e->right_, lvl+1);
+        }
+        if (e->left_) {
+            for (int i = 0; i < lvl; i++) {
+                printf("\t");
+            }
+            printf("|\r\n");
+            for (int i = 0; i < lvl; i++) {
+                printf("\t");
+            }
+            DumpTree(e->left_, lvl);
+        }
+    }
+}
+
 Evaluator::Evaluator(const char* val, size_t len, int string_pos)
 : type_(TYPE_VALUE)
-, m_nStringPosition(string_pos)
+, string_position_(string_pos)
 , left_(NULL)
 , right_(NULL)
+, op_(OP_NULL)
 {
-    m_sValueBuffer = new char[len + 1];
-    memcpy (m_sValueBuffer, val, len);
-    m_sValueBuffer[len] = '\0';
+    value_buffer_ = new char[len + 1];
+    memcpy (value_buffer_, val, len);
+    value_buffer_[len] = '\0';
+    I("new Evaluator: %s ========", value_buffer_);
 }
 
 Evaluator::Evaluator(char op, int string_pos)
 : type_(TYPE_OPERATOR)
-, m_nStringPosition(string_pos)
-, m_sValueBuffer(NULL)
+, string_position_(string_pos)
+, value_buffer_(NULL)
 , left_(NULL)
 , right_(NULL)
 {
@@ -137,13 +178,14 @@ Evaluator::Evaluator(char op, int string_pos)
         case '/': op_ = OP_DIV; break;
         case '%': op_ = OP_MOD; break;
     }
+    I("new Evaluator: %c ========", op);
 }
 
 Evaluator::~Evaluator()
 {
-    if (m_sValueBuffer) {
-        delete [] m_sValueBuffer;
-        m_sValueBuffer = NULL;
+    if (value_buffer_) {
+        delete [] value_buffer_;
+        value_buffer_ = NULL;
     }
     if (left_) {
         delete left_;
@@ -162,17 +204,17 @@ double Evaluator::getValue()
     }
 
     if (type_ == TYPE_VALUE) {
-        return atof(m_sValueBuffer);
+        return atof(value_buffer_);
     }
     else {
         if (! left_) {
             snprintf(error_info, sizeof(error_info),
-                "Lack of left value. Position: %d", m_nStringPosition);
+                "Lack of left value. Position: %d", string_position_);
             return 0.0;
         }
         if (! right_) {
             snprintf(error_info, sizeof(error_info),
-                "Lack of left value. Position: %d", m_nStringPosition);
+                "Lack of left value. Position: %d", string_position_);
             return 0.0;
         }
         double lvalue = left_->getValue();
@@ -185,7 +227,7 @@ double Evaluator::getValue()
             case OP_DIV: {
                 if (rvalue > -0.0000001 && rvalue < 0.0000001) {
                     snprintf(error_info, sizeof(error_info),
-                        "Division by zero error. Position: %d", m_nStringPosition);
+                        "Division by zero error. Position: %d", string_position_);
                     return 0.0;
                 }
                 return lvalue / rvalue;
@@ -194,6 +236,6 @@ double Evaluator::getValue()
     }
 
     snprintf(error_info, sizeof(error_info),
-        "Unknown type error occurred. Position: %d", m_nStringPosition);
+        "Unknown type error occurred. Position: %d", string_position_);
     return 0.0;
 }

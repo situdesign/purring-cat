@@ -18,6 +18,7 @@
 #include "hvml/hvml_string.h"
 #include "hvml/hvml_to_string.h"
 #include "HvmlRuntime.h"
+#include "Evaluator.h"
 
 #include <iostream>
 #include <exception>
@@ -481,7 +482,7 @@ bool HvmlRuntime::ObserveProc(int obv_index, StringArray_t& params)
     JsonQuery jq(jo);
     hvml_string_t s = jq.getString();
     I("^^^^^^ $expression: %s           ", s.str);
-    dump_StringArray(params);
+    //dump_StringArray(params);
 
     switch (obv_index) {
 
@@ -598,7 +599,17 @@ bool HvmlRuntime::ObserveProc(int obv_index, StringArray_t& params)
         } break;
 
         case 3: { // .equal
-            ;
+            const char* error = NULL;
+            double value = Evaluator::Parser(s.str, &error);
+            if (error) {
+                jq.setString(error);
+            }
+            else {
+                char value_s[64];
+                snprintf(value_s, sizeof(value_s),
+                        "%.4f", value);
+                jq.setString(value_s);
+            }
         } break;
     }
 
