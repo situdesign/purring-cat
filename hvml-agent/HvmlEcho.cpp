@@ -32,6 +32,7 @@ char* HvmlEcho::GetHttpResponse (int* info_len,
         size_t res_len = runtime_.GetIndexResponse(request + 6,// skip the "/index/"
                                                    info_message_,
                                                    INFO_MESSAGE_LEN);
+        *info_len = res_len;
         return (res_len > 0) ? info_message_ : NULL;
     }
 

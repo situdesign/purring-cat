@@ -151,6 +151,25 @@ void Evaluator::DumpTree(Evaluator* e, int lvl)
     }
 }
 
+void Evaluator::TrimZero(char* val)
+{
+    size_t n = strlen(val);
+    char *p = val+n-1;
+    while (p > val) {
+        if (*p == '0') {
+            *p = '\0';
+        }
+        else if (*p == '.') {
+            *p = '\0';
+            break;
+        }
+        else {
+            break;
+        }
+        p --;
+    }
+}
+
 Evaluator::Evaluator(const char* val, size_t len, int string_pos)
 : type_(TYPE_VALUE)
 , string_position_(string_pos)

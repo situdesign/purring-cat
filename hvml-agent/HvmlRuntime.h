@@ -47,7 +47,7 @@ private:
 
 private:
     bool Refresh(void);
-    bool RebuildHtml(char* response, size_t response_limit);
+    int  RebuildHtml(char* response, size_t response_limit);
 
     void TransformMustacheGroup();
     void TransformIterateGroup();
