@@ -1,5 +1,9 @@
-*.swp
-.vimrc
-debug/
-build/
-
+*.cmake
+CMakefiles
+CMakeCache*
+Makefile
+build
+test/interpreter/test/*.xml
+test/interpreter/test/*.html
+hvml-agent/Makefile.hvml_agent
+hvml-agent/index/index.html
