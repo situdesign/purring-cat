@@ -96,7 +96,7 @@ bool HvmlRuntime::Refresh(void)
     return true;
 }
 
-bool HvmlRuntime::RebuildHtml(char* response, size_t response_limit)
+int HvmlRuntime::RebuildHtml(char* response, size_t response_limit)
 {
     const char html_filename[] = "index/index.html";
 
@@ -607,7 +607,8 @@ bool HvmlRuntime::ObserveProc(int obv_index, StringArray_t& params)
             else {
                 char value_s[64];
                 snprintf(value_s, sizeof(value_s),
-                        "%.4f", value);
+                        "%.6f", value);
+                Evaluator::TrimZero(value_s);
                 jq.setString(value_s);
             }
         } break;

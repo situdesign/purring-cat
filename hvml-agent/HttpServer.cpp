@@ -138,6 +138,7 @@ Http_Handler::handle_input (ACE_HANDLE handle)
                                 response_len,
                                 response);
 
+        printf("\nxxxxxxxx ret_len: %d\n", response_len);
         this->stream_.send(echo_message, echo_len);
         return -1;
     }

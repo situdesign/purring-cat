@@ -41,6 +41,7 @@ private:
 public:
     static double Parser(const char* val, const char** error);
     static void DumpTree(Evaluator* e, int lvl);
+    static void TrimZero(char* val);
 
 public:
     Evaluator(const char* val, size_t len, int string_pos);
