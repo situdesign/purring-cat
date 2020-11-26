@@ -51,12 +51,15 @@ int ACE_TMAIN(int argc, char* argv[])
     HttpServer::StartServer(&http_echo);
     ACE_DEBUG((LM_DEBUG, ACE_TEXT("Start HttpEcho\n")));
 
+    printf("Please launch your browser and set URL to %s...\n", runtime.url_index());
+
+ /*   
     // start firefox
     char cmdline[64];
     snprintf(cmdline, sizeof cmdline, "firefox %s", runtime.url_index());
     system (cmdline); // system function would not return until Firefox shut down.
-
-    // wait_for_quit();
+*/
+    wait_for_quit();
 
     HttpServer::StopServer();
     ACE_DEBUG((LM_DEBUG, ACE_TEXT("Stop HttpEcho\n\n")));
